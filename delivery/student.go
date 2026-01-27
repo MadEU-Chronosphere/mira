@@ -228,7 +228,7 @@ func (h *StudentHandler) GetMyBookedClasses(c *gin.Context) {
 		})
 		return
 	}
-		
+
 	utils.PrintLogInfo(&name, 200, "GetMyBookedClasses", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

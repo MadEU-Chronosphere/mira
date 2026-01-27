@@ -45,9 +45,7 @@ func main() {
 	}
 
 	redisPass := os.Getenv("REDIS_PASSWORD")
-	if redisPass == "" {
-		log.Fatal("❌ Failed to fetch Redis password from env")
-	}
+	// Note: Redis password is optional for local development
 
 	redisClient := config.InitRedisDB(redisAddr, redisPass, 0)
 	// JWT secret validation
