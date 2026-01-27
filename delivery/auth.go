@@ -388,10 +388,13 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		)
 
 		utils.PrintLogInfo(&loweredEmail, 200, "Login", nil)
+		// ✅ Also return refresh_token in body for cross-domain deployment
+		// Cookie tidak bekerja untuk cross-domain (Vercel ↔ Heroku)
 		c.JSON(http.StatusOK, gin.H{
-			"success":      true,
-			"access_token": tokens.AccessToken,
-			"message":      "Login successful",
+			"success":       true,
+			"access_token":  tokens.AccessToken,
+			"refresh_token": tokens.RefreshToken, // ✅ ADDED for cross-domain support
+			"message":       "Login successful",
 		})
 		return
 	}

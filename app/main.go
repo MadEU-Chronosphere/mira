@@ -93,16 +93,9 @@ func main() {
 	// ========================================================================
 	// GRACEFUL SHUTDOWN SETUP
 	// ========================================================================
-	// ========================================================================
-	// GRACEFUL SHUTDOWN SETUP
-	// ========================================================================
-	// Heroku menggunakan variabel "PORT", lokal biasanya menggunakan "APP_PORT"
-	port := os.Getenv("PORT")
+	port := os.Getenv("APP_PORT")
 	if port == "" {
-		port = os.Getenv("APP_PORT")
-		if port == "" {
-			port = "8080" // Fallback terakhir
-		}
+		port = "8080"
 	}
 	srvAddr := ":" + port
 

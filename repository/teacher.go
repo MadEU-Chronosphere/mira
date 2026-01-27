@@ -99,23 +99,35 @@ func (r *teacherRepository) AddAvailability(ctx context.Context, schedules *[]do
 	// ✅ Check for overlaps BEFORE inserting within the transaction
 	for _, schedule := range *schedules {
 		var count int64
+
+		// Parse the times to compare properly
+		startTimeStr := schedule.StartTime.Format("15:04:05")
+		endTimeStr := schedule.EndTime.Format("15:04:05")
+
 		err := tx.
 			Model(&domain.TeacherSchedule{}).
-			Where("teacher_uuid = ? AND day_of_week = ? AND deleted_at IS NULL", schedule.TeacherUUID, schedule.DayOfWeek).
+			Where("teacher_uuid = ? AND day_of_week = ? AND deleted_at IS NULL",
+				schedule.TeacherUUID, schedule.DayOfWeek).
 			Where(`
-                (start_time, end_time) OVERLAPS (?, ?)
-            `, schedule.StartTime, schedule.EndTime).
+            (start_time::time, end_time::time) OVERLAPS (?::time, ?::time)
+        `, startTimeStr, endTimeStr).
 			Count(&count).Error
+
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("failed to check overlap: %w", err)
 		}
 		if count > 0 {
+			// Format times for display in WITA (UTC+8)
+			loc, _ := time.LoadLocation("Asia/Makassar")
+			startWITA := schedule.StartTime.In(loc).Format("15:04")
+			endWITA := schedule.EndTime.In(loc).Format("15:04")
+
 			tx.Rollback()
 			return fmt.Errorf("slot waktu %s %s-%s konflik dengan jadwal yang sudah ada",
 				schedule.DayOfWeek,
-				schedule.StartTime.Format("15:04"),
-				schedule.EndTime.Format("15:04"))
+				startWITA,
+				endWITA)
 		}
 	}
 
