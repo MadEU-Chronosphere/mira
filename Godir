@@ -1,0 +1,4 @@
+{
+  "install": ["./app/..."],
+  "go-version": "go1.24"
+}

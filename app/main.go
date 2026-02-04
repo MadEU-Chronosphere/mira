@@ -37,16 +37,11 @@ func main() {
 	// ========================================================================
 	// GRACEFUL SHUTDOWN SETUP
 	// ========================================================================
-// Ubah APP_PORT menjadi PORT
-port := os.Getenv("PORT") 
-
-if port == "" {
-    // Ini buat jaga-jaga kalau kamu running di laptop sendiri (lokal)
-    port = "8080" 
-}
-
-srvAddr := ":" + port
-// Lanjutkan ke listen and serve...
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	srvAddr := ":" + port
 
 	// Create HTTP server with custom configuration
 	srv := &http.Server{
