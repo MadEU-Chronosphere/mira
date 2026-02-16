@@ -1,1 +1,1 @@
-web: app 
+web: app -mode=no-wa

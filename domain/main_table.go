@@ -110,9 +110,10 @@ type TeacherSchedule struct {
 	NextClassDate *time.Time `gorm:"-" json:"next_class_date,omitempty"`
 
 	// Availability flags
-	IsDurationCompatible *bool `gorm:"-" json:"is_duration_compatible,omitempty"` // Student's package duration matches
-	IsRoomAvailable      *bool `gorm:"-" json:"is_room_available,omitempty"`      // Room slot available
-	IsFullyAvailable     *bool `gorm:"-" json:"is_fully_available,omitempty"`     // Both conditions met
+	IsBookedSameDayAndTime *bool `gorm:"-" json:"is_booked_same_day_and_time,omitempty"`
+	IsDurationCompatible   *bool `gorm:"-" json:"is_duration_compatible,omitempty"` // Student's package duration matches
+	IsRoomAvailable        *bool `gorm:"-" json:"is_room_available,omitempty"`      // Room slot available
+	IsFullyAvailable       *bool `gorm:"-" json:"is_fully_available,omitempty"`     // Both conditions met
 }
 
 type Booking struct {

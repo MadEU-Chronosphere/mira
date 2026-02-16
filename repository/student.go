@@ -562,13 +562,30 @@ func (r *studentRepository) GetAvailableSchedules(ctx context.Context, studentUU
 			sch.IsRoomAvailable = ptrBool(bookingCount < limit)
 		}
 
+		// Check for Existing Booking Conflict (Student side)
+		var existingBookingCount int64
+		err = r.db.WithContext(ctx).Model(&domain.Booking{}).
+			Joins("JOIN teacher_schedules ts ON ts.id = bookings.schedule_id").
+			Where("bookings.student_uuid = ?", studentUUID).
+			Where("bookings.status IN ?", []string{domain.StatusBooked, domain.StatusRescheduled}).
+			Where("bookings.class_date = ?", next).
+			Where("ts.start_time = ?", sch.StartTime).
+			Count(&existingBookingCount).Error
+
+		if err != nil {
+			fmt.Printf("Error checking existing booking: %v\n", err)
+			sch.IsBookedSameDayAndTime = ptrBool(false)
+		} else {
+			sch.IsBookedSameDayAndTime = ptrBool(existingBookingCount > 0)
+		}
+
 		// D. Fully Available
 		// Logic: Room available + Duration Compatible + Teacher Not Booked
 		// (User might want to see schedule even if teacher IS booked, but filtered earlier? No, user removed "is_booked=false" query filter in STEP 78/103 user code?)
 		// Wait, user's pasted code in STEP 103 DOES NOT include `Where("teacher_schedules.is_booked = ?", false)`.
 		// So we must handle `sch.IsBooked` here.
 
-		fully := *sch.IsRoomAvailable && *sch.IsDurationCompatible && !sch.IsBooked
+		fully := *sch.IsRoomAvailable && *sch.IsDurationCompatible && !sch.IsBooked && !*sch.IsBookedSameDayAndTime
 		sch.IsFullyAvailable = ptrBool(fully)
 
 		availableSchedules = append(availableSchedules, *sch)

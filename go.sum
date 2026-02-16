@@ -151,6 +151,8 @@ github.com/ugorji/go/codec v1.3.0 h1:Qd2W2sQawAfG8XSvzwhBeoGq71zXOC/Q1E9y/wUcsUA
 github.com/ugorji/go/codec v1.3.0/go.mod h1:pRBVtBSKl77K30Bv8R2P+cLSGaTtex6fsA2Wjqmfxj4=
 github.com/vektah/gqlparser/v2 v2.5.27 h1:RHPD3JOplpk5mP5JGX8RKZkt2/Vwj/PZv0HxTdwFp0s=
 github.com/vektah/gqlparser/v2 v2.5.27/go.mod h1:D1/VCZtV3LPnQrcPBeR/q5jkSQIPti0uYCP/RI0gIeo=
+github.com/xendit/xendit-go/v6 v6.4.0 h1:dxNtrw+ZYL8axwGVtjX6A/k+OkkjR72+pR8u7wJ9XHU=
+github.com/xendit/xendit-go/v6 v6.4.0/go.mod h1:vEp4kP6H0EQETAY2DpurHFvWJntuAW6cVlmAqG96hUU=
 go.mau.fi/libsignal v0.2.0 h1:oRXj3OHhEJq51BFEM8/50UZblmWiTYH93hsNTPcbk90=
 go.mau.fi/libsignal v0.2.0/go.mod h1:tvjoDsMejgT38CXTXwqaYu8itBiY8O2Mb6biWvZBb9k=
 go.mau.fi/util v0.9.1 h1:A+XKHRsjKkFi2qOm4RriR1HqY2hoOXNS3WFHaC89r2Y=

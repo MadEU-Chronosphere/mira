@@ -12,16 +12,15 @@ import (
 	"github.com/mdp/qrterminal"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store/sqlstore"
-	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
-func eventHandler(evt interface{}) {
-	switch v := evt.(type) {
-	case *events.Message:
-		fmt.Println("Received a message!", v.Message.GetConversation())
-	}
-}
+// func eventHandler(evt interface{}) {
+// 	switch v := evt.(type) {
+// 	case *events.Message:
+// 		fmt.Println("Received a message!", v.Message.GetConversation())
+// 	}
+// }
 
 func InitWA(dbAddress string) (*whatsmeow.Client, context.Context, error) {
 	dbLog := waLog.Stdout("Database", "DEBUG", true)
@@ -38,9 +37,9 @@ func InitWA(dbAddress string) (*whatsmeow.Client, context.Context, error) {
 		return nil, nil, fmt.Errorf("failed to get device: %w", err)
 	}
 
-	clientLog := waLog.Stdout("Client", "INFO", true)
-	client := whatsmeow.NewClient(deviceStore, clientLog)
-	client.AddEventHandler(eventHandler)
+	// clientLog := waLog.Stdout("Client", "INFO", true)
+	client := whatsmeow.NewClient(deviceStore, nil)
+	// client.AddEventHandler(eventHandler)
 
 	if client.Store.ID == nil {
 		qrChan, _ := client.GetQRChannel(ctx)

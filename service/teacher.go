@@ -180,9 +180,9 @@ Terima kasih! 🎵
 				Conversation: &teacherMessage,
 			})
 			if err != nil {
-				log.Printf("Failed to send WhatsApp to teacher %s: %v", teacherPhone, err)
+				log.Printf("🔕 Failed to send WhatsApp to teacher %s: %v", teacherPhone, err)
 			} else {
-				log.Printf("WhatsApp notification sent to teacher: %s", teacherPhone)
+				log.Printf("🔔 WhatsApp notification sent to teacher: %s", booking.Schedule.Teacher.Name)
 			}
 		}
 
@@ -192,9 +192,9 @@ Terima kasih! 🎵
 				Conversation: &studentMessage,
 			})
 			if err != nil {
-				log.Printf("Failed to send WhatsApp to student %s: %v", studentPhone, err)
+				log.Printf("🔕 Failed to send WhatsApp to student %s: %v", studentPhone, err)
 			} else {
-				log.Printf("WhatsApp notification sent to student: %s", studentPhone)
+				log.Printf("🔔 WhatsApp notification sent to student: %s", booking.Student.Name)
 			}
 		}
 
