@@ -6,6 +6,7 @@ import (
 	"chronosphere/middleware"
 	"chronosphere/utils"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -14,6 +15,31 @@ import (
 
 type AuthHandler struct {
 	authUC domain.AuthUseCase
+}
+
+// setRefreshTokenCookie sets the refresh_token cookie with proper
+// SameSite and Secure attributes based on the environment.
+// Production (cross-domain): SameSite=None + Secure=true
+// Development (localhost):   SameSite=Lax  + Secure=false
+func setRefreshTokenCookie(c *gin.Context, value string, maxAge int) {
+	isProduction := os.Getenv("APP_ENV") == "production"
+
+	sameSite := http.SameSiteLaxMode
+	secure := false
+	if isProduction {
+		sameSite = http.SameSiteNoneMode
+		secure = true
+	}
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    value,
+		MaxAge:   maxAge,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   secure,
+		SameSite: sameSite,
+	})
 }
 
 func NewAuthHandler(r *gin.Engine, authUC domain.AuthUseCase, db *gorm.DB) {
@@ -91,15 +117,7 @@ func (h *AuthHandler) ChangeEmail(c *gin.Context) {
 
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// ✅ Clear cookie (for web)
-	c.SetCookie(
-		"refresh_token",
-		"",
-		-1, // Expire immediately
-		"/",
-		"",    // domain
-		false, // secure=false for dev
-		true,  // HttpOnly
-	)
+	setRefreshTokenCookie(c, "", -1)
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
@@ -139,7 +157,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	_, err = h.authUC.Me(c.Request.Context(), userUUID)
 	if err != nil {
 		// User deleted - clear cookie and reject
-		c.SetCookie("refresh_token", "", -1, "/", "", false, true)
+		setRefreshTokenCookie(c, "", -1)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
 			"message": "User account not found",
@@ -171,15 +189,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	}
 
 	// ✅ For web clients, update HttpOnly cookie
-	c.SetCookie(
-		"refresh_token",
-		newRefreshToken,
-		60*60*24*7, // 7 days
-		"/",
-		"",    // ✅ replace in prod
-		false, // ✅ secure cookies (HTTPS only)
-		true,  // ✅ HttpOnly
-	)
+	setRefreshTokenCookie(c, newRefreshToken, 60*60*24*7)
 
 	// ✅ Return new access token
 	c.JSON(http.StatusOK, gin.H{
@@ -381,15 +391,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	if !isMobileApp {
 		// ✅ For WEB: store refresh_token in HttpOnly secure cookie
-		c.SetCookie(
-			"refresh_token",
-			tokens.RefreshToken, // ✅ correct variable
-			60*60*24*7,          // 7 days
-			"/",
-			"",    // ⚠️ change to your actual domain in production
-			false, // ✅ secure (HTTPS only)
-			true,  // ✅ HttpOnly
-		)
+		setRefreshTokenCookie(c, tokens.RefreshToken, 60*60*24*7)
 
 		utils.PrintLogInfo(&loweredEmail, 200, "Login", nil)
 		c.JSON(http.StatusOK, gin.H{

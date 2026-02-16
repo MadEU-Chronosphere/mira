@@ -9,7 +9,6 @@ import (
 	"os"
 
 	_ "github.com/lib/pq"
-	"github.com/mdp/qrterminal"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/store/sqlstore"
 	waLog "go.mau.fi/whatsmeow/util/log"
@@ -79,9 +78,7 @@ Note: This QR code will expire in a short time. If it expires, you'll receive a 
 					)
 				}
 
-				fmt.Println("QR code has been sent to your email!")
-				fmt.Println("Scan this QR code with WhatsApp (also shown in terminal):")
-				qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
+				// qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
 			} else {
 				fmt.Println("Login event:", evt.Event)
 			}
