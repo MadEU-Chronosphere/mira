@@ -7,6 +7,7 @@ import (
 	"chronosphere/repository"
 	"chronosphere/service"
 	"chronosphere/utils"
+	"fmt"
 	"log"
 	"os"
 
@@ -18,6 +19,7 @@ import (
 )
 
 func InitializeAppWithoutWhatsappNotification() (*gin.Engine, *gorm.DB) {
+	fmt.Println("🚀 Starting in NO-WA mode")
 	// Load .env
 	if err := godotenv.Load(); err != nil {
 		log.Println("⚠️  .env file not found, using system environment variables")
@@ -100,6 +102,7 @@ func InitializeAppWithoutWhatsappNotification() (*gin.Engine, *gorm.DB) {
 
 func InitializeAppWithoutRateLimiter() (*gin.Engine, *gorm.DB) {
 	// Load .env
+	fmt.Println("🚀 Starting in NO-LIMITER mode")
 	if err := godotenv.Load(); err != nil {
 		log.Println("⚠️  .env file not found, using system environment variables")
 	}
@@ -181,6 +184,7 @@ func InitializeAppWithoutRateLimiter() (*gin.Engine, *gorm.DB) {
 
 func InitializeFullApp() (*gin.Engine, *gorm.DB) {
 	// Load .env
+	fmt.Println("🚀 Starting in FULL mode")
 	if err := godotenv.Load(); err != nil {
 		log.Println("⚠️  .env file not found, using system environment variables")
 	}
