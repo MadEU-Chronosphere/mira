@@ -268,39 +268,59 @@ func (s *paymentService) GetPaymentHistory(ctx context.Context, filter domain.Hi
 func (s *paymentService) GetPackageSummary(ctx context.Context) ([]domain.PackageSummary, error) {
 	return s.paymentRepo.GetPackageSummary(ctx)
 }
-
 func (s *paymentService) sendPaymentSuccessNotification(student *domain.User, pkg *domain.Package) {
-	if s.messenger == nil || student == nil || pkg == nil {
-		return
-	}
+	// Normalize phone number
+	studentPhone := utils.NormalizePhoneNumber(student.Phone)
+	studentJID := types.NewJID(studentPhone, types.DefaultUserServer)
 
-	phoneNormalized := utils.NormalizePhoneNumber(student.Phone)
-	if phoneNormalized == "" {
-		log.Printf("⚠️ Student %s has no valid phone number for WA notification", student.Name)
-		return
-	}
+	// Rich message with emojis
+	msgToStudent := fmt.Sprintf(
+		`🎉 *Halo %s!*
 
-	jid := types.NewJID(phoneNormalized, types.DefaultUserServer)
+✅ *Pembayaran Berhasil!*
+Paket *"%s"* kamu sudah aktif dan siap digunakan.
 
-	appName := os.Getenv("APP_NAME")
-	if appName == "" {
-		appName = "MadEU"
-	}
+📦 *Detail Paket:*
+┣ 📚 Nama Paket: %s
+┣ 🎯 Jumlah Kelas: %d sesi
+┗ ⏳ Masa Aktif: %d hari
 
-	message := fmt.Sprintf(
-		"Halo %s 👋\n\n"+
-			"Pembayaran kamu untuk paket *%s* telah berhasil! ✅\n\n"+
-			"Paket langsung aktif dan kamu bisa langsung booking kelas.\n\n"+
-			"Terima kasih telah menggunakan %s! 🎵",
-		student.Name, pkg.Name, appName,
+✨ *Apa yang bisa kamu lakukan sekarang?*
+• 📅 Pesan kelas dengan guru favoritmu
+• 📖 Mulai belajar dan raih prestasi
+• 🏆 Pantau progress belajarmu
+
+🚀 *Mulai belajar sekarang:*
+🔗 https://madeu.app
+
+Terima kasih telah memilih MadEU! 🌟
+
+*#MadEU #BelajarJadiMudah*`,
+		student.Name,
+		pkg.Name,
+		pkg.Name,
+		pkg.Quota,
+		pkg.ExpiredDuration,
 	)
 
-	_, err := s.messenger.SendMessage(context.Background(), jid, &waE2E.Message{
-		Conversation: &message,
-	})
-	if err != nil {
-		log.Printf("🔕 Failed to send WhatsApp payment notification to %s: %v", student.Name, err)
-	} else {
-		log.Printf("🔔 WhatsApp payment notification sent to: %s", student.Name)
+	// Create WhatsApp message
+	waMessage := &waE2E.Message{
+		Conversation: &msgToStudent,
 	}
+
+	// Send message asynchronously with proper context handling
+	go func() {
+		// Create new background context for async operation
+		asyncCtx := context.Background()
+
+		// Send message
+		_, err := s.messenger.SendMessage(asyncCtx, studentJID, waMessage)
+		if err != nil {
+			log.Printf("🔕 Gagal mengirim notifikasi WhatsApp ke %s (%s): %v",
+				student.Name, student.Phone, err)
+		} else {
+			log.Printf("🔔 Notifikasi WhatsApp berhasil dikirim ke: %s (%s)",
+				student.Name, student.Phone)
+		}
+	}()
 }
