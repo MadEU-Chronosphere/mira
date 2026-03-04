@@ -189,10 +189,12 @@ func (r *teacherRepository) FinishClass(ctx context.Context, bookingID int, teac
 		return fmt.Errorf("format waktu selesai tidak valid: %v", err)
 	}
 
+	loc, _ := time.LoadLocation("Asia/Makassar")
+
 	classStart := time.Date(
 		booking.ClassDate.Year(), booking.ClassDate.Month(), booking.ClassDate.Day(),
 		parsedStart.Hour(), parsedStart.Minute(), parsedStart.Second(), 0,
-		booking.ClassDate.Location(),
+		loc,
 	)
 
 	// Determine actual class end based on package duration
@@ -211,14 +213,14 @@ func (r *teacherRepository) FinishClass(ctx context.Context, bookingID int, teac
 		classEnd = time.Date(
 			booking.ClassDate.Year(), booking.ClassDate.Month(), booking.ClassDate.Day(),
 			parsedEnd.Hour(), parsedEnd.Minute(), parsedEnd.Second(), 0,
-			booking.ClassDate.Location(),
+			loc,
 		)
 	}
 
-	now := time.Now().In(classEnd.Location())
+	now := time.Now().In(loc)
 
 	// 4️⃣ Check if class can be finished
-	canFinish := now.After(classEnd)
+	canFinish := now.Equal(classEnd) || now.After(classEnd)
 
 	if !canFinish {
 		tx.Rollback()
@@ -502,7 +504,8 @@ func (r *teacherRepository) GetAllBookedClass(ctx context.Context, teacherUUID s
 		return nil, err
 	}
 
-	now := time.Now()
+	loc, _ := time.LoadLocation("Asia/Makassar")
+	now := time.Now().In(loc)
 	for i := range bookings {
 		// Combine ClassDate with Schedule time components
 		startTimeStr := bookings[i].Schedule.StartTime
@@ -514,10 +517,11 @@ func (r *teacherRepository) GetAllBookedClass(ctx context.Context, teacherUUID s
 		parsedEnd, _ := time.Parse("15:04", endTimeStr)
 
 		// Create actual datetime by combining date from ClassDate with time from Schedule
+		// Make sure to use loc timezone for class start & end so comparison is accurate.
 		classStart := time.Date(
 			classDate.Year(), classDate.Month(), classDate.Day(),
 			parsedStart.Hour(), parsedStart.Minute(), 0, 0,
-			classDate.Location(), // Use ClassDate location
+			loc,
 		)
 
 		// Calculate end time
@@ -539,7 +543,7 @@ func (r *teacherRepository) GetAllBookedClass(ctx context.Context, teacherUUID s
 			bookings[i].Status = domain.StatusUpcoming
 			bookings[i].IsReadyToFinish = false
 
-		case now.After(classStart) && now.Before(classEnd):
+		case (now.Equal(classStart) || now.After(classStart)) && now.Before(classEnd):
 			bookings[i].Status = domain.StatusOngoing
 
 			if is30MinPackage {
@@ -549,8 +553,13 @@ func (r *teacherRepository) GetAllBookedClass(ctx context.Context, teacherUUID s
 				bookings[i].IsReadyToFinish = false
 			}
 
-		case now.After(classEnd):
+		case now.Equal(classEnd) || now.After(classEnd):
 			bookings[i].IsReadyToFinish = true
+		}
+
+		// ongoing case
+		if now.Equal(classStart) || now.After(classStart) {
+			bookings[i].Status = domain.StatusOngoing
 		}
 	}
 

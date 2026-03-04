@@ -368,23 +368,54 @@ func (r *studentRepository) GetMyBookedClasses(ctx context.Context, studentUUID 
 	}
 
 	// ✅ Add status indicators
-	now := time.Now()
+	loc, _ := time.LoadLocation("Asia/Makassar")
+	now := time.Now().In(loc)
 	for i := range bookings {
 		startTimeStr := bookings[i].Schedule.StartTime
 		parsedStart, _ := time.Parse("15:04", startTimeStr)
 
-		classDateTime := time.Date(
+		classStart := time.Date(
 			bookings[i].ClassDate.Year(),
 			bookings[i].ClassDate.Month(),
 			bookings[i].ClassDate.Day(),
 			parsedStart.Hour(),
 			parsedStart.Minute(),
-			0, 0, time.Local,
+			0, 0, loc,
 		)
 
+		var classEnd time.Time
+		is30MinPackage := false
+
+		if bookings[i].PackageUsed.Package != nil {
+			is30MinPackage = bookings[i].PackageUsed.Package.Duration == 30
+		}
+
+		if is30MinPackage {
+			classEnd = classStart.Add(30 * time.Minute)
+		} else {
+			endTimeStr := bookings[i].Schedule.EndTime
+			parsedEnd, _ := time.Parse("15:04", endTimeStr)
+			classEnd = time.Date(
+				bookings[i].ClassDate.Year(),
+				bookings[i].ClassDate.Month(),
+				bookings[i].ClassDate.Day(),
+				parsedEnd.Hour(),
+				parsedEnd.Minute(),
+				0, 0, loc,
+			)
+		}
+
 		switch {
-		case now.Before(classDateTime):
+		case now.Before(classStart):
 			bookings[i].Status = domain.StatusUpcoming
+
+		// on going case
+		case (now.Equal(classStart) || now.After(classStart)) && now.Before(classEnd):
+			bookings[i].Status = domain.StatusOngoing
+
+		// finished case
+		case now.Equal(classEnd) || now.After(classEnd):
+			bookings[i].Status = domain.StatusFinished
 		}
 	}
 
