@@ -83,15 +83,24 @@ func (r *studentRepository) CancelBookedClass(
 		return nil, errors.New("anda tidak memiliki akses ke booking ini")
 	}
 
+	loc, _ := time.LoadLocation("Asia/Makassar")
+	now := time.Now().In(loc)
+
+	classDate := booking.ClassDate.In(loc)
+	bookedAt := booking.BookedAt.In(loc)
+
 	// Check if class is in the future
-	if booking.ClassDate.Before(time.Now()) {
+	if classDate.Before(now) {
 		tx.Rollback()
 		return nil, errors.New("tidak bisa membatalkan kelas yang sudah lewat")
 	}
 
+	isBookedToday := bookedAt.Year() == now.Year() && bookedAt.YearDay() == now.YearDay()
+	isClassToday := classDate.Year() == now.Year() && classDate.YearDay() == now.YearDay()
+
 	// H-1 cancellation rule (24 hours before class)
-	minCancelTime := booking.ClassDate.Add(-24 * time.Hour)
-	if time.Now().After(minCancelTime) {
+	minCancelTime := classDate.Add(-24 * time.Hour)
+	if now.After(minCancelTime) && !(isBookedToday && isClassToday) {
 		tx.Rollback()
 		return nil, errors.New("pembatalan hanya bisa dilakukan minimal H-1 (24 jam) sebelum kelas")
 	}
@@ -616,7 +625,7 @@ func (r *studentRepository) GetAvailableSchedules(ctx context.Context, studentUU
 		// per-occurrence flag — it must NOT be used here. The per-date conflict
 		// check (IsBookedSameDayAndTime) already covers whether this specific
 		// upcoming occurrence is taken.
-		fully := *sch.IsRoomAvailable && *sch.IsDurationCompatible && !*sch.IsBookedSameDayAndTime
+		fully := *sch.IsRoomAvailable && *sch.IsDurationCompatible && !sch.IsBooked && !*sch.IsBookedSameDayAndTime
 		sch.IsFullyAvailable = ptrBool(fully)
 
 		availableSchedules = append(availableSchedules, *sch)
