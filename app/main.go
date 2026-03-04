@@ -4,6 +4,7 @@ import (
 	"chronosphere/bootstrap"
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -15,6 +16,9 @@ import (
 )
 
 func main() {
+	fmt.Println("=====================================")
+	fmt.Println("🚀 Starting Chronosphere Myra Backend Application")
+	fmt.Println("=====================================")
 	// Initialize Application
 	// Parse flags
 	mode := flag.String("mode", "full", "Application mode: full, no-wa, no-limiter")
