@@ -412,10 +412,11 @@ func (r *studentRepository) GetMyBookedClasses(ctx context.Context, studentUUID 
 		// on going case
 		case (now.Equal(classStart) || now.After(classStart)) && now.Before(classEnd):
 			bookings[i].Status = domain.StatusOngoing
+		}
 
 		// finished case
-		case now.Equal(classEnd) || now.After(classEnd):
-			bookings[i].Status = domain.StatusFinished
+		if now.Equal(classEnd) || now.After(classEnd) {
+			bookings[i].IsReadyToFinish = true
 		}
 	}
 
