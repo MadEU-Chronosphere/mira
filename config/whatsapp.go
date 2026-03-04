@@ -31,16 +31,14 @@ func InitWA(dbAddress string) (*whatsmeow.Client, context.Context, error) {
 		return nil, nil, fmt.Errorf("failed to create sqlstore: %w", err)
 	}
 
-	// defer printer for whatsmeow pointer value
-
 	deviceStore, err := container.GetFirstDevice(ctx)
 	if err != nil {
 		log.Fatal("Failed to get ", utils.ColorText("Device first ", utils.Yellow), ", error: ", err)
 		return nil, nil, fmt.Errorf("failed to get device: %w", err)
 	}
 
-	// clientLog := waLog.Stdout("Client", "INFO", true)
-	client := whatsmeow.NewClient(deviceStore, nil)
+	clientLog := waLog.Stdout("Client", "INFO", true)
+	client := whatsmeow.NewClient(deviceStore, clientLog)
 	// client.AddEventHandler(eventHandler)
 
 	if client.Store.ID == nil {
@@ -81,6 +79,8 @@ Note: This QR code will expire in a short time. If it expires, you'll receive a 
 					)
 				}
 
+				fmt.Println("QR code has been sent to your email!")
+				fmt.Println("Scan this QR code with WhatsApp (also shown in terminal):")
 				qrterminal.GenerateHalfBlock(evt.Code, qrterminal.L, os.Stdout)
 			} else {
 				fmt.Println("Login event:", evt.Event)
@@ -93,6 +93,6 @@ Note: This QR code will expire in a short time. If it expires, you'll receive a 
 		}
 	}
 
-	log.Print("Connected to ", utils.ColorText("Whatsapp", utils.Green), " successfully")
+	log.Print("✅ Connected to ", utils.ColorText("Whatsapp", utils.Green), " successfully")
 	return client, ctx, nil
 }

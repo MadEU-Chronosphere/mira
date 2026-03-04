@@ -205,10 +205,6 @@ func InitializeFullApp() (*gin.Engine, *gorm.DB) {
 
 	// init WA message
 	WhatsappClient, _, err := config.InitWA(*addr)
-	if WhatsappClient == nil {
-		log.Println("whatsup client is nil")
-	}
-	
 	if err != nil {
 		log.Fatal("❌ Failed to connect to WhatsApp: ", err)
 	}

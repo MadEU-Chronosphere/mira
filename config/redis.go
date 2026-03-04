@@ -1,6 +1,7 @@
 package config
 
 import (
+	"chronosphere/utils"
 	"context"
 	"log"
 
@@ -15,8 +16,9 @@ func InitRedisDB(addr, password string, db int) *redis.Client {
 	})
 
 	if _, err := rdb.Ping(context.Background()).Result(); err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
+		log.Fatalf("❌ Failed to connect to Redis: %v", err)
 	}
 
+	log.Print("✅ Connected to ", utils.ColorText("Redis", utils.Green), " successfully")
 	return rdb
 }

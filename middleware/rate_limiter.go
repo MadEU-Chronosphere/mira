@@ -314,7 +314,7 @@ func getIdentifier(c *gin.Context, scope string) string {
 	switch scope {
 	case "user":
 		// Extract user ID from JWT token or session
-		if userID, exists := c.Get("user_id"); exists {
+		if userID, exists := c.Get("userUUID"); exists {
 			return fmt.Sprintf("user:%v", userID)
 		}
 		// Fallback to IP if no user context
@@ -601,7 +601,7 @@ func logRateLimitBlock(c *gin.Context, rule RateLimitConfig, identifier string) 
 // Admin endpoint to view rate limit status
 func RateLimitStatusHandler(c *gin.Context) {
 	// Only accessible to admins
-	userRole, exists := c.Get("user_role")
+	userRole, exists := c.Get("role")
 	if !exists || userRole != "admin" {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 		return

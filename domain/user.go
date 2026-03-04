@@ -13,7 +13,6 @@ type UserUseCase interface {
 	GetAllUsers(ctx context.Context) ([]User, error)
 	GetUserByUUID(ctx context.Context, uuid string) (*User, error)
 	UpdateUser(ctx context.Context, user *User) error
-	DeleteUser(ctx context.Context, uuid string) error
 	Login(ctx context.Context, email, password string) (*User, error)
 }
 
@@ -25,6 +24,5 @@ type UserRepository interface {
 	GetAllUsers(ctx context.Context) ([]User, error)
 	GetUserByUUID(ctx context.Context, uuid string) (*User, error)
 	UpdateUser(ctx context.Context, user *User) error
-	DeleteUser(ctx context.Context, uuid string) error
 	Login(ctx context.Context, email, password string) (*User, error)
 }

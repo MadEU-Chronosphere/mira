@@ -61,6 +61,23 @@ func StudentAndAdminOnly() gin.HandlerFunc {
 	}
 }
 
+func StudentOnly() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := utils.GetAPIHitter(c)
+		role, _ := c.Get("role")
+		if role != domain.RoleStudent {
+			utils.PrintLogInfo(&name, 403, "Student only Middleware - Role Check", nil)
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Student access required",
+			})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
 func ManagerAndAdminOnly() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		name := utils.GetAPIHitter(c)
@@ -89,6 +106,51 @@ func ManagerAndAdminOnly() gin.HandlerFunc {
 	}
 }
 
+func ManagerOnly() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := utils.GetAPIHitter(c)
+		role, exists := c.Get("role")
+		if !exists {
+			utils.PrintLogInfo(&name, 403, "Manager only Middleware - Role Check", nil)
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Manager access required",
+			})
+			c.Abort()
+			return
+		}
+
+		// Check if role is either Admin or Manager
+		if role != domain.RoleManagement {
+			utils.PrintLogInfo(&name, 403, "Manager only Middleware - Role Check", nil)
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Manager access required",
+			})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+func TeacherOnly() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := utils.GetAPIHitter(c)
+		role, exists := c.Get("role")
+		if !exists || role == domain.RoleStudent || role == domain.RoleManagement || role == domain.RoleAdmin {
+			utils.PrintLogInfo(&name, 403, "Teacher only Middleware - Role Check", nil)
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "Teacher access required",
+			})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
 func ValidateTurnedOffUserMiddleware(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		name := utils.GetAPIHitter(c)
@@ -105,6 +167,7 @@ func ValidateTurnedOffUserMiddleware(db *gorm.DB) gin.HandlerFunc {
 
 		if role != domain.RoleTeacher && role != domain.RoleManagement {
 			c.Next()
+			return
 		}
 
 		userUUID, exists := c.Get("userUUID")

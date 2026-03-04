@@ -188,7 +188,7 @@ func (r *studentRepository) BookClass(
 
 	if schedule.IsBooked {
 		tx.Rollback()
-		return nil, errors.New("jadwal sudah dibooking oleh siswa lain")
+		return nil, errors.New("jadwal sudah dibooking oleh siswa")
 	}
 
 	// 2️⃣ Verify Teacher Teaches the Requested Instrument
@@ -580,12 +580,11 @@ func (r *studentRepository) GetAvailableSchedules(ctx context.Context, studentUU
 		}
 
 		// D. Fully Available
-		// Logic: Room available + Duration Compatible + Teacher Not Booked
-		// (User might want to see schedule even if teacher IS booked, but filtered earlier? No, user removed "is_booked=false" query filter in STEP 78/103 user code?)
-		// Wait, user's pasted code in STEP 103 DOES NOT include `Where("teacher_schedules.is_booked = ?", false)`.
-		// So we must handle `sch.IsBooked` here.
-
-		fully := *sch.IsRoomAvailable && *sch.IsDurationCompatible && !sch.IsBooked && !*sch.IsBookedSameDayAndTime
+		// is_booked is a permanent per-slot flag (true once ever booked), not a
+		// per-occurrence flag — it must NOT be used here. The per-date conflict
+		// check (IsBookedSameDayAndTime) already covers whether this specific
+		// upcoming occurrence is taken.
+		fully := *sch.IsRoomAvailable && *sch.IsDurationCompatible && !*sch.IsBookedSameDayAndTime
 		sch.IsFullyAvailable = ptrBool(fully)
 
 		availableSchedules = append(availableSchedules, *sch)

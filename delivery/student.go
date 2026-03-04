@@ -22,7 +22,7 @@ func NewStudentHandler(r *gin.Engine, studUC domain.StudentUseCase, jwtManager *
 
 	student := r.Group("/student")
 
-	student.Use(config.AuthMiddleware(jwtManager), middleware.StudentAndAdminOnly())
+	student.Use(config.AuthMiddleware(jwtManager), middleware.StudentOnly())
 	{
 		student.GET("/profile", handler.GetMyProfile)
 		student.POST("/book", handler.BookClass)

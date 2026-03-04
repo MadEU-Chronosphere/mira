@@ -37,10 +37,6 @@ func (s *userService) UpdateUser(ctx context.Context, user *domain.User) error {
 	return s.repo.UpdateUser(ctx, user)
 }
 
-func (s *userService) DeleteUser(ctx context.Context, uuid string) error {
-	return s.repo.DeleteUser(ctx, uuid)
-}
-
 func (s *userService) Login(ctx context.Context, email, password string) (*domain.User, error) {
 	return s.repo.Login(ctx, email, password)
 }

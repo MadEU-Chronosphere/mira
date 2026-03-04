@@ -271,13 +271,13 @@ func (r *teacherRepository) FinishClass(ctx context.Context, bookingID int, teac
 		return fmt.Errorf("Kelas belum dimulai. Kelas akan dimulai pukul %s", startFormatted)
 	}
 
-	// 6️⃣ Set default notes if empty
 	defaultNotes := "Kelas selesai, tanpa catatan"
+
 	if payload.Notes == nil || *payload.Notes == "" {
 		payload.Notes = &defaultNotes
 	}
 
-	// 7️⃣ Create ClassHistory
+	// 6️⃣ Create ClassHistory
 	classHistory := domain.ClassHistory{
 		BookingID: booking.ID,
 		Status:    domain.StatusCompleted,
@@ -309,34 +309,11 @@ func (r *teacherRepository) FinishClass(ctx context.Context, bookingID int, teac
 		return fmt.Errorf("gagal memperbarui status booking: %w", err)
 	}
 
-	// 9️⃣ IMPORTANT: Check if the other half of schedule is available
-	// If 30-min package used first half (13:00-13:30), second half (13:30-14:00) should be freed
-	if is30MinPackage {
-		// Check if there's another booking for the second half
-		var secondHalfBooking domain.Booking
-		err := tx.Where("schedule_id = ? AND class_date = ? AND status = ?",
-			booking.ScheduleID, booking.ClassDate, domain.StatusBooked).
-			Where("id != ?", booking.ID).
-			First(&secondHalfBooking).Error
-
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// No booking for second half, keep schedule available
-			// Do nothing - schedule already marked as available
-		} else if err == nil {
-			// There's a booking for second half, DON'T free the schedule
-			// Do nothing - keep schedule booked
-		} else {
-			tx.Rollback()
-			return fmt.Errorf("gagal memeriksa jadwal: %w", err)
-		}
-	} else {
-		// 60-min package used entire slot, free the schedule
-		if err := tx.Model(&domain.TeacherSchedule{}).
-			Where("id = ?", booking.ScheduleID).
-			Update("is_booked", false).Error; err != nil {
-			tx.Rollback()
-			return fmt.Errorf("gagal memperbarui jadwal: %w", err)
-		}
+	if err := tx.Model(&domain.TeacherSchedule{}).
+		Where("id = ?", booking.ScheduleID).
+		Update("is_booked", false).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("gagal memperbarui jadwal: %w", err)
 	}
 
 	// ✅ Commit
@@ -657,17 +634,15 @@ func (r *teacherRepository) CancelBookedClass(
 		return nil, errors.New("anda tidak memiliki akses ke booking ini")
 	}
 
-	// Check if class is in the future (use WITA timezone for Heroku UTC compatibility)
-	loc, _ := time.LoadLocation("Asia/Makassar")
-	nowWITA := time.Now().In(loc)
-	if booking.ClassDate.Before(nowWITA) {
+	// Check if class is in the future
+	if booking.ClassDate.Before(time.Now()) {
 		tx.Rollback()
 		return nil, errors.New("tidak bisa membatalkan kelas yang sudah lewat")
 	}
 
 	// H-1 cancellation rule (24 hours before class)
 	minCancelTime := booking.ClassDate.Add(-24 * time.Hour)
-	if nowWITA.After(minCancelTime) {
+	if time.Now().After(minCancelTime) {
 		tx.Rollback()
 		return nil, errors.New("pembatalan hanya bisa dilakukan minimal H-1 (24 jam) sebelum kelas")
 	}

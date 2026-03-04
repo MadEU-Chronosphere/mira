@@ -399,19 +399,6 @@ func (r *adminRepo) AssignPackageToStudent(ctx context.Context, studentUUID stri
 		}
 	}
 
-	// 4️⃣ Check if student already has this package active
-	// var existing domain.StudentPackage
-	// if err := tx.Where(`
-	// 	student_uuid = ?
-	// 	AND package_id = ?
-	// 	AND end_date > ?
-	// 	AND remaining_quota > 0`,
-	// 	studentUUID, packageID, time.Now()).
-	// 	First(&existing).Error; err == nil {
-	// 	tx.Rollback()
-	// 	return errors.New("siswa sudah memiliki paket ini yang masih aktif")
-	// }
-
 	// 5️⃣ Assign new package
 	newSub := domain.StudentPackage{
 		StudentUUID:    studentUUID,
@@ -677,49 +664,6 @@ func (r *adminRepo) UpdateTeacher(ctx context.Context, user *domain.User, instru
 		}
 	}()
 
-	// ==========================
-	// instrument only
-	// ==========================
-
-	// Cek apakah user exists dan belum dihapus
-	// var existingUser domain.User
-	// err := tx.Where("uuid = ? AND role = ? AND deleted_at IS NULL", user.UUID, domain.RoleTeacher).First(&existingUser).Error
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
-	// 		return errors.New("guru tidak ditemukan / nonaktif")
-	// 	}
-	// 	return fmt.Errorf("error mencari guru: %w", err)
-	// }
-
-	// // Check email duplicate dengan user lain
-	// var emailCount int64
-	// err = tx.Model(&domain.User{}).
-	// 	Where("email = ? AND uuid != ? AND deleted_at IS NULL", user.Email, user.UUID).
-	// 	Count(&emailCount).Error
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	return fmt.Errorf("error checking email: %w", err)
-	// }
-	// if emailCount > 0 {
-	// 	tx.Rollback()
-	// 	return errors.New("email sudah digunakan oleh user lain")
-	// }
-
-	// // Check phone duplicate dengan user lain
-	// var phoneCount int64
-	// err = tx.Model(&domain.User{}).
-	// 	Where("phone = ? AND uuid != ? AND deleted_at IS NULL", user.Phone, user.UUID).
-	// 	Count(&phoneCount).Error
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	return fmt.Errorf("error checking phone: %w", err)
-	// }
-	// if phoneCount > 0 {
-	// 	tx.Rollback()
-	// 	return errors.New("nomor telepon sudah digunakan oleh user lain")
-	// }
-
 	// Check instruments exist
 	if len(instrumentIDs) > 0 {
 		var instrumentCount int64
@@ -738,45 +682,8 @@ func (r *adminRepo) UpdateTeacher(ctx context.Context, user *domain.User, instru
 		}
 	}
 
-	// // Update user data
-	// err = tx.Model(&domain.User{}).
-	// 	Where("uuid = ?", user.UUID).
-	// 	Updates(user).Error
-	// if err != nil {
-	// 	tx.Rollback()
-	// 	return fmt.Errorf("gagal memperbarui data guru: %w", err)
-	// }
-
 	// Update TeacherProfile bio jika ada
 	if user.TeacherProfile != nil {
-		// Cek apakah teacher profile sudah ada atau perlu dibuat baru
-		// var profileCount int64
-		// err := tx.Model(&domain.TeacherProfile{}).
-		// 	Where("user_uuid = ?", user.UUID).
-		// 	Count(&profileCount).Error
-		// if err != nil {
-		// 	tx.Rollback()
-		// 	return fmt.Errorf("error checking teacher profile: %w", err)
-		// }
-
-		// if profileCount > 0 {
-		// 	// Update existing profile
-		// 	err = tx.Model(&domain.TeacherProfile{}).
-		// 		Where("user_uuid = ?", user.UUID).
-		// 		Update("bio", user.TeacherProfile.Bio).Error
-		// } else {
-		// 	// Create new profile
-		// 	err = tx.Create(&domain.TeacherProfile{
-		// 		UserUUID: user.UUID,
-		// 		Bio:      user.TeacherProfile.Bio,
-		// 	}).Error
-		// }
-
-		// if err != nil {
-		// 	tx.Rollback()
-		// 	return fmt.Errorf("gagal memperbarui profil guru: %w", err)
-		// }
-
 		// Update many-to-many relationship untuk instruments
 		if len(instrumentIDs) > 0 {
 			// Hapus associations yang lama

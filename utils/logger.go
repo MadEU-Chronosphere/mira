@@ -11,13 +11,13 @@ import (
 )
 
 func PrintPretty(data interface{}) {
-    // MarshalIndent membuat format JSON dengan spasi (indentasi)
-    prettyJSON, err := json.MarshalIndent(data, "", "    ")
-    if err != nil {
-        fmt.Println("Gagal mencetak struct:", err)
-        return
-    }
-    fmt.Println(string(prettyJSON))
+	// MarshalIndent membuat format JSON dengan spasi (indentasi)
+	prettyJSON, err := json.MarshalIndent(data, "", "    ")
+	if err != nil {
+		fmt.Println("Gagal mencetak struct:", err)
+		return
+	}
+	fmt.Println(string(prettyJSON))
 }
 
 func PrintLogInfo(username *string, statusCode int, functionName string, err *error) {
@@ -54,7 +54,6 @@ func GetAPIHitter(c *gin.Context) string {
 	if apiHitterVal == nil {
 		apiHitter = "unknown"
 		PrintLogInfo(nil, 401, "Get API Hitter - Get Admin Name", nil)
-		c.JSON(http.StatusUnauthorized, gin.H{"success": false, "error": "Unauthorized"})
 	}
 	return apiHitter
 }

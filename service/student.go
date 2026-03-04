@@ -156,40 +156,35 @@ Terima kasih! 🎵
 		os.Getenv("TARGETED_DOMAIN"),
 		os.Getenv("APP_NAME"))
 
-	// Send messages asynchronously (don't block the booking)
-	go func() {
-		// Parse phone numbers (remove + if present, ensure proper format)
-		teacherPhone := utils.NormalizePhoneNumber(booking.Schedule.Teacher.Phone)
-		studentPhone := utils.NormalizePhoneNumber(booking.Student.Phone)
+	// Capture values before launching goroutine to avoid data races on booking.
+	tPhone := booking.Schedule.Teacher.Phone
+	sPhone := booking.Student.Phone
+	tMsg := teacherMessage
+	sMsg := studentMessage
 
-		// Create JIDs for WhatsApp
+	go func() {
+		notifyCtx := context.Background()
+		teacherPhone := utils.NormalizePhoneNumber(tPhone)
+		studentPhone := utils.NormalizePhoneNumber(sPhone)
 		teacherJID := types.NewJID(teacherPhone, types.DefaultUserServer)
 		studentJID := types.NewJID(studentPhone, types.DefaultUserServer)
 
-		// Send to teacher
 		if teacherPhone != "" {
-			_, err := s.messenger.SendMessage(context.Background(), teacherJID, &waE2E.Message{
-				Conversation: &teacherMessage,
-			})
+			_, err := s.messenger.SendMessage(notifyCtx, teacherJID, &waE2E.Message{Conversation: &tMsg})
 			if err != nil {
 				log.Printf("🔕 Failed to send WhatsApp to teacher %s: %v", teacherPhone, err)
 			} else {
-				log.Printf("🔔 WhatsApp notification sent to teacher: %s", booking.Schedule.Teacher.Name)
+				log.Printf("🔔 WhatsApp notification sent to teacher: %s", tPhone)
 			}
 		}
-
-		// Send to student
 		if studentPhone != "" {
-			_, err := s.messenger.SendMessage(context.Background(), studentJID, &waE2E.Message{
-				Conversation: &studentMessage,
-			})
+			_, err := s.messenger.SendMessage(notifyCtx, studentJID, &waE2E.Message{Conversation: &sMsg})
 			if err != nil {
 				log.Printf("🔕 Failed to send WhatsApp to student %s: %v", studentPhone, err)
 			} else {
-				log.Printf("🔔 WhatsApp notification sent to student: %s", booking.Student.Name)
+				log.Printf("🔔 WhatsApp notification sent to student: %s", sPhone)
 			}
 		}
-
 	}()
 }
 
@@ -315,40 +310,35 @@ _Selamat belajar! 🎶_
 		os.Getenv("TARGETED_DOMAIN"),
 		os.Getenv("APP_NAME"))
 
-	// Send messages asynchronously (don't block the booking)
-	go func() {
-		// Parse phone numbers (remove + if present, ensure proper format)
-		teacherPhone := utils.NormalizePhoneNumber(booking.Schedule.Teacher.Phone)
-		studentPhone := utils.NormalizePhoneNumber(booking.Student.Phone)
+	// Capture values before launching goroutine to avoid data races on booking.
+	tPhone := booking.Schedule.Teacher.Phone
+	sPhone := booking.Student.Phone
+	tMsg := teacherMessage
+	sMsg := studentMessage
 
-		// Create JIDs for WhatsApp
+	go func() {
+		notifyCtx := context.Background()
+		teacherPhone := utils.NormalizePhoneNumber(tPhone)
+		studentPhone := utils.NormalizePhoneNumber(sPhone)
 		teacherJID := types.NewJID(teacherPhone, types.DefaultUserServer)
 		studentJID := types.NewJID(studentPhone, types.DefaultUserServer)
 
-		// Send to teacher
 		if teacherPhone != "" {
-			_, err := s.messenger.SendMessage(context.Background(), teacherJID, &waE2E.Message{
-				Conversation: &teacherMessage,
-			})
+			_, err := s.messenger.SendMessage(notifyCtx, teacherJID, &waE2E.Message{Conversation: &tMsg})
 			if err != nil {
 				log.Printf("🔕 Failed to send WhatsApp to teacher %s: %v", teacherPhone, err)
 			} else {
-				log.Printf("🔔 WhatsApp notification sent to teacher: %s", booking.Schedule.Teacher.Name)
+				log.Printf("🔔 WhatsApp notification sent to teacher: %s", tPhone)
 			}
 		}
-
-		// Send to student
 		if studentPhone != "" {
-			_, err := s.messenger.SendMessage(context.Background(), studentJID, &waE2E.Message{
-				Conversation: &studentMessage,
-			})
+			_, err := s.messenger.SendMessage(notifyCtx, studentJID, &waE2E.Message{Conversation: &sMsg})
 			if err != nil {
 				log.Printf("🔕 Failed to send WhatsApp to student %s: %v", studentPhone, err)
 			} else {
-				log.Printf("🔔 WhatsApp notification sent to student: %s", booking.Student.Name)
+				log.Printf("🔔 WhatsApp notification sent to student: %s", sPhone)
 			}
 		}
-
 	}()
 }
 
@@ -369,56 +359,5 @@ func (s *studentUseCase) GetMyBookedClasses(ctx context.Context, studentUUID str
 }
 
 func (s *studentUseCase) GetAvailableSchedules(ctx context.Context, studentUUID string) (*[]domain.TeacherSchedule, error) {
-	// student, err := s.repo.GetMyProfile(ctx, studentUUID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// validPackages := make(map[int]map[int]bool)
-	// var validInstrumentIDs []int
-	// packageSameInstrumentDifferentDuration := []int{}
-
-	// for _, sp := range student.StudentProfile.Packages {
-	// 	if sp.Package == nil {
-	// 		continue
-	// 	}
-
-	// 	instID := sp.Package.InstrumentID
-	// 	duration := sp.Package.Duration // e.g., 30 or 60
-
-	// 	_, exists := validPackages[instID]
-	// 	if !exists {
-	// 		packageSameInstrumentDifferentDuration = append(packageSameInstrumentDifferentDuration, instID)
-	// 		validPackages[instID] = make(map[int]bool)
-	// 		validInstrumentIDs = append(validInstrumentIDs, instID)
-	// 	}
-	// 	validPackages[instID][duration] = true
-	// }
-
-	// if len(validInstrumentIDs) == 0 {
-	// 	return &[]domain.TeacherSchedule{}, nil
-	// }
-
-	// schedules, err := s.repo.GetTeacherSchedulesBasedOnInstrumentIDs(ctx, validInstrumentIDs)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// Truee := true
-	// FalseFlag := false
-
-	// for _, v := range *schedules {
-	// 	for _, instrumentIDs := range packageSameInstrumentDifferentDuration {
-	// 		if v.TeacherProfile.InstrumentID == instrumentIDs {
-	// 			v.IsDurationCompatible = &Truee
-	// 		}
-	// 	}
-	// 	if v.IsDurationCompatible == nil {
-	// 		v.IsDurationCompatible = &FalseFlag
-	// 	}
-	// }
-
-	// return nil, nil
 	return s.repo.GetAvailableSchedules(ctx, studentUUID)
-
 }
