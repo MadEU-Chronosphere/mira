@@ -532,10 +532,9 @@ func (r *teacherRepository) GetAllBookedClass(ctx context.Context, teacherUUID s
 
 		classEnd := classStart.Add(duration)
 
-		// Check if 30-minute package
-		is30MinPackage := false
-		if bookings[i].PackageUsed.Package != nil {
-			is30MinPackage = bookings[i].PackageUsed.Package.Duration == 30
+		// ongoing case
+		if now.Equal(classStart) || now.After(classStart) {
+			bookings[i].Status = domain.StatusOngoing
 		}
 
 		switch {
@@ -546,21 +545,11 @@ func (r *teacherRepository) GetAllBookedClass(ctx context.Context, teacherUUID s
 		case (now.Equal(classStart) || now.After(classStart)) && now.Before(classEnd):
 			bookings[i].Status = domain.StatusOngoing
 
-			if is30MinPackage {
-				halfwayPoint := classStart.Add(duration / 2)
-				bookings[i].IsReadyToFinish = now.After(halfwayPoint)
-			} else {
-				bookings[i].IsReadyToFinish = false
-			}
-
 		case now.Equal(classEnd) || now.After(classEnd):
 			bookings[i].IsReadyToFinish = true
+			bookings[i].Status = domain.StatusClassFinished
 		}
 
-		// ongoing case
-		if now.Equal(classStart) || now.After(classStart) {
-			bookings[i].Status = domain.StatusOngoing
-		}
 	}
 
 	// ✅ Populate LatestClassHistories for each student
