@@ -506,7 +506,7 @@ func RateLimiter() gin.HandlerFunc {
 		globalAllowed, _, err := slidingWindowRateLimit(globalIPKey, rateLimitRules["global_ip"])
 		if err != nil || !globalAllowed {
 			c.JSON(http.StatusTooManyRequests, gin.H{
-				"error": "Global rate limit exceeded",
+				"error": "Batas permintaan global terlampaui",
 				"code":  "RATE_LIMIT_GLOBAL_IP",
 			})
 			c.Abort()
@@ -521,7 +521,7 @@ func RateLimiter() gin.HandlerFunc {
 			userAllowed, _, err := slidingWindowRateLimit(globalUserKey, rateLimitRules["global_user"])
 			if err != nil || !userAllowed {
 				c.JSON(http.StatusTooManyRequests, gin.H{
-					"error": "User rate limit exceeded",
+					"error": "Batas permintaan pengguna terlampaui",
 					"code":  "RATE_LIMIT_GLOBAL_USER",
 				})
 				c.Abort()
@@ -568,7 +568,7 @@ func RateLimiter() gin.HandlerFunc {
 				})
 			} else {
 				c.JSON(http.StatusTooManyRequests, gin.H{
-					"error":       fmt.Sprintf("Too many requests, please try again in %v", rule.Window.String()),
+					"error":       fmt.Sprintf("Permintaan terlalu sering, harap coba lagi dalam %v", rule.Window.String()),
 					"code":        "RATE_LIMIT_EXCEEDED",
 					"retry_after": int(rule.Window.Seconds()),
 					"limit":       rule.MaxRequests,

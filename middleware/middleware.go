@@ -18,7 +18,7 @@ func AdminOnly() gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "AdminOnly Middleware - Role Check", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Admin access required",
+				"message": "Akses admin diperlukan",
 			})
 			c.Abort()
 			return
@@ -35,7 +35,7 @@ func TeacherAndAdminOnly() gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "Admin and Teacher only Middleware - Role Check", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Admin and Teacher access required",
+				"message": "Akses admin dan guru diperlukan",
 			})
 			c.Abort()
 			return
@@ -52,7 +52,7 @@ func StudentAndAdminOnly() gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "Admin and Student only Middleware - Role Check", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Admin and Student access required",
+				"message": "Akses admin dan siswa diperlukan",
 			})
 			c.Abort()
 			return
@@ -69,7 +69,7 @@ func StudentOnly() gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "Student only Middleware - Role Check", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Student access required",
+				"message": "Akses siswa diperlukan",
 			})
 			c.Abort()
 			return
@@ -86,7 +86,7 @@ func ManagerAndAdminOnly() gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "Admin and Manager only Middleware - Role Check", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Admin and Manager access required",
+				"message": "Akses admin dan manajer diperlukan",
 			})
 			c.Abort()
 			return
@@ -97,7 +97,7 @@ func ManagerAndAdminOnly() gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "Admin and Manager only Middleware - Role Check", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Admin and Manager access required",
+				"message": "Akses admin dan manajer diperlukan",
 			})
 			c.Abort()
 			return
@@ -114,7 +114,7 @@ func ManagerOnly() gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "Manager only Middleware - Role Check", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Manager access required",
+				"message": "Akses manajer diperlukan",
 			})
 			c.Abort()
 			return
@@ -125,7 +125,7 @@ func ManagerOnly() gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "Manager only Middleware - Role Check", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Manager access required",
+				"message": "Akses manajer diperlukan",
 			})
 			c.Abort()
 			return
@@ -142,7 +142,7 @@ func TeacherOnly() gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "Teacher only Middleware - Role Check", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Teacher access required",
+				"message": "Akses guru diperlukan",
 			})
 			c.Abort()
 			return
@@ -159,7 +159,7 @@ func ValidateTurnedOffUserMiddleware(db *gorm.DB) gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "Role Check Failure", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "User role checker failed / not found",
+				"message": "Pengecekan peran pengguna gagal / tidak ditemukan",
 			})
 			c.Abort()
 			return
@@ -175,7 +175,7 @@ func ValidateTurnedOffUserMiddleware(db *gorm.DB) gin.HandlerFunc {
 			utils.PrintLogInfo(&name, 403, "User UUID checker failure", nil)
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "User UUID not found",
+				"message": "UUID pengguna tidak ditemukan",
 			})
 			c.Abort()
 			return

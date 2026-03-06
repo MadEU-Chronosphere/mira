@@ -87,8 +87,8 @@ func (h *AuthHandler) ChangeEmail(c *gin.Context) {
 		utils.PrintLogInfo(nil, 401, "ChangePassword", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Failed to get user from context",
-			"error":   "unauthorized"})
+			"message": "Gagal mendapatkan data pengguna dari konteks",
+			"error":   "tidak terotorisasi"})
 		return
 	}
 
@@ -97,7 +97,7 @@ func (h *AuthHandler) ChangeEmail(c *gin.Context) {
 		utils.PrintLogInfo(nil, 400, "ChangeEmail", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Invalid request",
+			"message": "Permintaan tidak valid",
 			"error":   utils.TranslateValidationError(err)})
 		return
 	}
@@ -106,12 +106,12 @@ func (h *AuthHandler) ChangeEmail(c *gin.Context) {
 		utils.PrintLogInfo(nil, 401, "ChangeEmail", &err)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Failed to change email",
+			"message": "Gagal mengubah email",
 			"error":   err.Error()})
 		return
 	}
 	utils.PrintLogInfo(nil, 200, "ChangeEmail", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Email changed successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Email berhasil diubah"})
 
 }
 
@@ -121,7 +121,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Logout successful",
+		"message": "Berhasil keluar",
 	})
 }
 
@@ -136,7 +136,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		if bindErr := c.ShouldBindJSON(&req); bindErr != nil || req.RefreshToken == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
 				"success": false,
-				"message": "No refresh token provided",
+				"message": "Token penyegaran tidak diberikan",
 			})
 			return
 		}
@@ -148,7 +148,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Invalid or expired refresh token",
+			"message": "Token penyegaran tidak valid atau sudah kadaluarsa",
 		})
 		return
 	}
@@ -160,8 +160,8 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		setRefreshTokenCookie(c, "", -1)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "User account not found",
-			"error":   "user_deleted",
+			"message": "Akun pengguna tidak ditemukan",
+			"error":   "pengguna_dihapus",
 		})
 		return
 	}
@@ -171,7 +171,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"message": "Failed to generate new access token",
+			"message": "Gagal membuat token akses baru",
 			"error":   err.Error(),
 		})
 		return
@@ -182,7 +182,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"message": "Failed to generate new refresh token",
+			"message": "Gagal membuat token penyegaran baru",
 			"error":   err.Error(),
 		})
 		return
@@ -194,7 +194,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	// ✅ Return new access token
 	c.JSON(http.StatusOK, gin.H{
 		"success":       true,
-		"message":       "Token refreshed successfully",
+		"message":       "Token berhasil diperbaharui",
 		"access_token":  newAccessToken,
 		"refresh_token": newRefreshToken,
 	})
@@ -210,7 +210,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	if !existsUUID || !existsRole {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Unauthorized: missing user context",
+			"message": "Tidak terotorisasi: konteks pengguna tidak ditemukan",
 		})
 		return
 	}
@@ -219,7 +219,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Invalid user UUID type",
+			"message": "Tipe UUID pengguna tidak valid",
 		})
 		return
 	}
@@ -248,7 +248,7 @@ func (h *AuthHandler) ResendOTP(c *gin.Context) {
 		utils.PrintLogInfo(nil, 400, "ResendOTP", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Invalid request",
+			"message": "Permintaan tidak valid",
 			"error":   err.Error(),
 		})
 		return
@@ -258,7 +258,7 @@ func (h *AuthHandler) ResendOTP(c *gin.Context) {
 		utils.PrintLogInfo(&req.Email, 500, "ResendOTP", &err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"message": "Failed to resend OTP",
+			"message": "Gagal mengirim ulang OTP",
 			"error":   err.Error(),
 		})
 		return
@@ -267,7 +267,7 @@ func (h *AuthHandler) ResendOTP(c *gin.Context) {
 	utils.PrintLogInfo(&req.Email, 200, "ResendOTP", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "OTP resent successfully",
+		"message": "OTP berhasil dikirim ulang",
 	})
 }
 
@@ -290,7 +290,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		utils.PrintLogInfo(nil, 400, "Register", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Failed to register",
+			"message": "Gagal mendaftar",
 			"error":   utils.TranslateValidationError(err),
 		})
 		return
@@ -308,7 +308,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		utils.PrintLogInfo(&req.Email, 409, "Register", &err)
 		c.JSON(http.StatusConflict, gin.H{
 			"success": false,
-			"message": "Failed to register",
+			"message": "Gagal mendaftar",
 			"error":   err.Error(),
 		})
 		return
@@ -316,7 +316,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	utils.PrintLogInfo(&req.Email, 200, "Register", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "OTP sent to your email",
+		"message": "OTP telah dikirim ke email Anda",
 	})
 }
 
@@ -330,7 +330,7 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.PrintLogInfo(nil, 400, "VerifyOTP", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid request",
+			"message": "Permintaan tidak valid",
 			"success": false,
 			"error":   err.Error()})
 		return
@@ -338,7 +338,7 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 	if err := h.authUC.VerifyOTP(c.Request.Context(), req.Email, req.OTP); err != nil {
 		utils.PrintLogInfo(&req.Email, 401, "VerifyOTP", &err)
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"message": "Failed to verify OTP",
+			"message": "Gagal memverifikasi OTP",
 			"success": false,
 			"error":   err.Error()})
 		return
@@ -347,7 +347,7 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 	utils.PrintLogInfo(&req.Email, 200, "VerifyOTP", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "User created successfully"})
+		"message": "Pengguna berhasil dibuat"})
 }
 
 type LoginRequest struct {
@@ -360,7 +360,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.PrintLogInfo(nil, 400, "Login", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Invalid request",
+			"message": "Permintaan tidak valid",
 			"success": false,
 			"error":   err.Error(),
 		})
@@ -372,7 +372,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	if err != nil {
 		utils.PrintLogInfo(&loweredEmail, 401, "Login", &err)
 		c.JSON(http.StatusUnauthorized, gin.H{
-			"message": "Login failed",
+			"message": "Login gagal",
 			"success": false,
 			"error":   err.Error(),
 		})
@@ -397,7 +397,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"success":      true,
 			"access_token": tokens.AccessToken,
-			"message":      "Login successful",
+			"message":      "Login berhasil",
 		})
 		return
 	}
@@ -408,7 +408,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		"success":       true,
 		"access_token":  tokens.AccessToken,
 		"refresh_token": tokens.RefreshToken,
-		"message":       "Login successful",
+		"message":       "Login berhasil",
 	})
 }
 
@@ -428,7 +428,7 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		utils.PrintLogInfo(nil, 400, "ForgotPassword", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Invalid request",
+			"message": "Permintaan tidak valid",
 			"error":   err.Error()})
 		return
 	}
@@ -437,13 +437,13 @@ func (h *AuthHandler) ForgotPassword(c *gin.Context) {
 		utils.PrintLogInfo(&req.Email, 500, "ForgotPassword", &err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"message": "Failed to process request",
+			"message": "Gagal memproses permintaan",
 			"error":   err.Error()})
 		return
 	}
 
 	utils.PrintLogInfo(&req.Email, 200, "ForgotPassword", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "OTP sent for reset password"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "OTP telah dikirim untuk reset password"})
 }
 
 func (h *AuthHandler) ResetPassword(c *gin.Context) {
@@ -452,7 +452,7 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 		utils.PrintLogInfo(nil, 400, "ResetPassword", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Invalid request",
+			"message": "Permintaan tidak valid",
 			"error":   err.Error()})
 		return
 	}
@@ -461,13 +461,13 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 		utils.PrintLogInfo(&req.Email, 401, "ResetPassword", &err)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Failed to reset password",
+			"message": "Gagal mereset password",
 			"error":   err.Error()})
 		return
 	}
 
 	utils.PrintLogInfo(&req.Email, 200, "ResetPassword", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Password reset successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Password berhasil direset"})
 }
 
 func (h *AuthHandler) ChangePassword(c *gin.Context) {
@@ -477,8 +477,8 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 		utils.PrintLogInfo(nil, 401, "ChangePassword", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Failed to get user from context",
-			"error":   "unauthorized"})
+			"message": "Gagal mendapatkan data pengguna dari konteks",
+			"error":   "tidak terotorisasi"})
 		return
 	}
 
@@ -487,7 +487,7 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 		utils.PrintLogInfo(nil, 400, "ChangePassword", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Invalid request",
+			"message": "Permintaan tidak valid",
 			"error":   utils.TranslateValidationError(err)})
 		return
 	}
@@ -496,11 +496,11 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 		utils.PrintLogInfo(nil, 401, "ChangePassword", &err)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Failed to change password",
+			"message": "Gagal mengubah password",
 			"error":   err.Error()})
 		return
 	}
 
 	utils.PrintLogInfo(nil, 200, "ChangePassword", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Password changed successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Password berhasil diubah"})
 }

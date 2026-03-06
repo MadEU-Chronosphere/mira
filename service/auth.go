@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	ErrEmailExists     = errors.New("email already exists")
-	ErrTelephoneExists = errors.New("telephone already exists")
+	ErrEmailExists     = errors.New("email sudah terdaftar")
+	ErrTelephoneExists = errors.New("nomor telepon sudah terdaftar")
 )
 
 type authService struct {
@@ -45,13 +45,13 @@ func (s *authService) ChangeEmail(ctx context.Context, userUUID, newEmail, passw
 	// Compare pass
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return errors.New("invalid password")
+		return errors.New("kata sandi tidak valid")
 	}
 
 	// Cek apakah email baru sudah ada
 	_, err = s.userRepo.GetUserByEmail(ctx, newEmail)
 	if err == nil {
-		return errors.New("email already in use")
+		return errors.New("email sudah digunakan")
 	}
 
 	// Update email
@@ -77,10 +77,10 @@ func (s *authService) ResendOTP(ctx context.Context, email string) error {
 	// cek apakah OTP lama ada
 	data, err := s.otpRepo.GetOTP(ctx, email)
 	if err != nil {
-		return fmt.Errorf("failed to get OTP: %w", err)
+		return fmt.Errorf("gagal mengambil OTP: %w", err)
 	}
 	if data == nil {
-		return errors.New("no pending OTP found, please register or request password reset first")
+		return errors.New("tidak ada OTP yang tertunda, silakan daftar atau minta reset kata sandi terlebih dahulu")
 	}
 
 	// generate OTP baru
@@ -101,12 +101,12 @@ func (s *authService) ResendOTP(ctx context.Context, email string) error {
 		5*time.Minute,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to save new OTP: %w", err)
+		return fmt.Errorf("gagal menyimpan OTP baru: %w", err)
 	}
 
 	// kirim OTP via email
-	if err := utils.SendEmail(email, "Your OTP Code", "Your new OTP is: "+newOTP); err != nil {
-		return fmt.Errorf("failed to send OTP email: %w", err)
+	if err := utils.SendEmail(email, "Kode OTP Anda", "OTP baru Anda adalah: "+newOTP); err != nil {
+		return fmt.Errorf("gagal mengirim email OTP: %w", err)
 	}
 
 	return nil
@@ -155,14 +155,14 @@ func (s *authService) Register(ctx context.Context, email string, name string, t
 	// Hash password
 	hashedBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return fmt.Errorf("failed to hash password: %w", err)
+		return fmt.Errorf("gagal mengenkripsi kata sandi: %w", err)
 	}
 	hashedPassword := string(hashedBytes)
 
 	// Generate OTP
 	otp, err := utils.GenerateOTP(6)
 	if err != nil {
-		return fmt.Errorf("failed to generate OTP: %w", err)
+		return fmt.Errorf("gagal membuat OTP: %w", err)
 	}
 
 	theMinute := os.Getenv("OTP_TIME")
@@ -173,15 +173,15 @@ func (s *authService) Register(ctx context.Context, email string, name string, t
 
 	// Save to Redis
 	if err := s.otpRepo.SaveOTP(ctx, email, otp, hashedPassword, name, telephone, gender, time.Duration(otpTime)*time.Minute); err != nil {
-		return fmt.Errorf("failed to save OTP: %w", err)
+		return fmt.Errorf("gagal menyimpan OTP: %w", err)
 	}
 
 	// Kirim email OTP
-	subject := "Your MadEU OTP Code"
-	body := fmt.Sprintf("Your OTP code is: %s (valid for %d minutes)", otp, otpTime)
+	subject := "Kode OTP MadEU Anda"
+	body := fmt.Sprintf("Kode OTP Anda adalah: %s (berlaku selama %d menit)", otp, otpTime)
 
 	if err := utils.SendEmail(email, subject, body); err != nil {
-		return fmt.Errorf("failed to send OTP email: %w", err)
+		return fmt.Errorf("gagal mengirim email OTP: %w", err)
 	}
 
 	return nil
@@ -190,10 +190,10 @@ func (s *authService) Register(ctx context.Context, email string, name string, t
 func (s *authService) VerifyOTP(ctx context.Context, email, otp string) error {
 	data, valid, err := s.otpRepo.VerifyOTP(ctx, email, otp)
 	if err != nil {
-		return fmt.Errorf("failed to verify OTP: %w", err)
+		return fmt.Errorf("gagal memverifikasi OTP: %w", err)
 	}
 	if !valid {
-		return errors.New("invalid or expired OTP")
+		return errors.New("OTP tidak valid atau sudah kadaluarsa")
 	}
 
 	// SELALU gunakan hash dari Redis (tidak perlu test dengan password hardcoded)
@@ -208,7 +208,7 @@ func (s *authService) VerifyOTP(ctx context.Context, email, otp string) error {
 	}
 
 	if err := s.userRepo.CreateUser(ctx, user); err != nil {
-		return fmt.Errorf("failed to create user: %w", err)
+		return fmt.Errorf("gagal membuat pengguna: %w", err)
 	}
 
 	storedUser, err := s.userRepo.GetUserByEmail(ctx, email)
@@ -229,7 +229,7 @@ func (s *authService) VerifyOTP(ctx context.Context, email, otp string) error {
 func (s *authService) ForgotPassword(ctx context.Context, email string) error {
 	user, err := s.userRepo.GetUserByEmail(ctx, email)
 	if err != nil {
-		return errors.New("email not found")
+		return errors.New("email tidak ditemukan")
 	}
 
 	otp, err := utils.GenerateOTP(6)
@@ -246,7 +246,7 @@ func (s *authService) ForgotPassword(ctx context.Context, email string) error {
 	body := fmt.Sprintf("Halo %s,\n\nKode OTP untuk reset password akun Anda adalah: %s\nKode ini hanya berlaku selama 5 menit.\n\nJika Anda tidak merasa melakukan permintaan ini, abaikan email ini.",
 		user.Name, otp)
 	if err := utils.SendEmail(email, subject, body); err != nil {
-		return fmt.Errorf("failed to send OTP email: %w", err)
+		return fmt.Errorf("gagal mengirim email OTP: %w", err)
 	}
 
 	return nil
@@ -258,7 +258,7 @@ func (s *authService) ResetPassword(ctx context.Context, email, otp, newPassword
 		return err
 	}
 	if !valid {
-		return errors.New("invalid or expired OTP")
+		return errors.New("OTP tidak valid atau sudah kadaluarsa")
 	}
 
 	// Hash new password
@@ -288,7 +288,7 @@ func (s *authService) ChangePassword(ctx context.Context, userUUID, oldPassword,
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(oldPassword)); err != nil {
-		return errors.New("old password mismatch")
+		return errors.New("kata sandi lama tidak cocok")
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)

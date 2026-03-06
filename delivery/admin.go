@@ -79,8 +79,8 @@ func (h *AdminHandler) UpdateAdmin(c *gin.Context) {
 		utils.PrintLogInfo(&adminName, 401, "UpdateAdmin", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
-			"message": "Failed to update admin profile",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
+			"message": "Gagal memperbarui profil admin",
 		})
 		return
 	}
@@ -90,7 +90,7 @@ func (h *AdminHandler) UpdateAdmin(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   utils.TranslateValidationError(err),
-			"massage": "Failed to update admin profile",
+			"massage": "Gagal memperbarui profil admin",
 		})
 
 		return
@@ -108,14 +108,14 @@ func (h *AdminHandler) UpdateAdmin(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   utils.TranslateDBError(err),
-			"message": "Failed to update admin profile",
+			"message": "Gagal memperbarui profil admin",
 		})
 		return
 	}
 	utils.PrintLogInfo(&adminName, 200, "UpdateAdmin", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Admin profile updated",
+		"message": "Profil admin berhasil diperbarui",
 	})
 }
 
@@ -159,7 +159,7 @@ func (h *AdminHandler) GetPackagesByID(c *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
 		utils.PrintLogInfo(&name, 400, "GetPackagesByID - Atoi", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "Invalid package ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "error": "ID paket tidak valid"})
 		return
 	}
 
@@ -179,7 +179,7 @@ func (h *AdminHandler) GetAllClassHistories(c *gin.Context) {
 	histories, err := h.uc.GetAllClassHistories(c.Request.Context())
 	if err != nil {
 		utils.PrintLogInfo(&name, 500, "GetAllClassHistories - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to retrieve class histories"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal mengambil riwayat kelas"})
 		return
 	}
 	utils.PrintLogInfo(&name, 200, "GetAllClassHistories", nil)
@@ -192,7 +192,7 @@ func (h *AdminHandler) CreatePackage(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.PrintLogInfo(&name, 400, "CreatePackage - BindJSON", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to create package", "success": false, "error": utils.TranslateValidationError(err)})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal membuat paket", "success": false, "error": utils.TranslateValidationError(err)})
 		return
 	}
 
@@ -213,12 +213,12 @@ func (h *AdminHandler) CreatePackage(c *gin.Context) {
 	created, err := h.uc.CreatePackage(c.Request.Context(), pkg)
 	if err != nil {
 		utils.PrintLogInfo(&name, 500, "CreatePackage - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create package", "success": false, "error": utils.TranslateDBError(err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal membuat paket", "success": false, "error": utils.TranslateDBError(err)})
 		return
 	}
 
 	utils.PrintLogInfo(&name, 201, "CreatePackage", nil)
-	c.JSON(http.StatusCreated, gin.H{"message": "Package created successfully", "success": true, "data": created})
+	c.JSON(http.StatusCreated, gin.H{"message": "Paket berhasil dibuat", "success": true, "data": created})
 }
 
 func (h *AdminHandler) UpdatePackage(c *gin.Context) {
@@ -227,14 +227,14 @@ func (h *AdminHandler) UpdatePackage(c *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
 		utils.PrintLogInfo(&name, 400, "UpdatePackage - Atoi", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to update package", "success": false, "error": "Invalid package ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal memperbarui paket", "success": false, "error": "ID paket tidak valid"})
 		return
 	}
 
 	var req UpdatePackageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.PrintLogInfo(&name, 400, "UpdatePackage - BindJSON", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to update package", "success": false, "error": utils.TranslateValidationError(err)})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal memperbarui paket", "success": false, "error": utils.TranslateValidationError(err)})
 		return
 	}
 
@@ -248,7 +248,7 @@ func (h *AdminHandler) UpdatePackage(c *gin.Context) {
 
 	if req.Duration != 30 && req.Duration != 60 {
 		utils.PrintLogInfo(&name, 400, "UpdatePackage - Minute Payload Failure", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to update package", "success": false, "error": "Durasi paket hanya bisa 30 atau 60 menit"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal memperbarui paket", "success": false, "error": "Durasi paket hanya bisa 30 atau 60 menit"})
 		return
 	}
 
@@ -262,12 +262,12 @@ func (h *AdminHandler) UpdatePackage(c *gin.Context) {
 
 	if err := h.uc.UpdatePackage(c.Request.Context(), pkg); err != nil {
 		utils.PrintLogInfo(&name, 500, "UpdatePackage - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to update package", "success": false, "error": utils.TranslateDBError(err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal memperbarui paket", "success": false, "error": utils.TranslateDBError(err)})
 		return
 	}
 
 	utils.PrintLogInfo(&name, 200, "UpdatePackage", nil)
-	c.JSON(http.StatusOK, gin.H{"message": "Package updated successfully", "success": true})
+	c.JSON(http.StatusOK, gin.H{"message": "Paket berhasil diperbarui", "success": true})
 }
 
 func (h *AdminHandler) DeletePackage(c *gin.Context) {
@@ -276,18 +276,18 @@ func (h *AdminHandler) DeletePackage(c *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
 		utils.PrintLogInfo(&name, 400, "DeletePackage - Atoi", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to delete package", "success": false, "error": "Invalid package ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal menghapus paket", "success": false, "error": "ID paket tidak valid"})
 		return
 	}
 
 	if err := h.uc.DeletePackage(c.Request.Context(), id); err != nil {
 		utils.PrintLogInfo(&name, 500, "DeletePackage - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to delete package", "success": false, "error": utils.TranslateDBError(err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menghapus paket", "success": false, "error": utils.TranslateDBError(err)})
 		return
 	}
 
 	utils.PrintLogInfo(&name, 200, "DeletePackage", nil)
-	c.JSON(http.StatusOK, gin.H{"message": "Package deleted successfully", "success": true})
+	c.JSON(http.StatusOK, gin.H{"message": "Paket berhasil dihapus", "success": true})
 }
 
 func (h *AdminHandler) AssignPackageToStudent(c *gin.Context) {
@@ -296,18 +296,18 @@ func (h *AdminHandler) AssignPackageToStudent(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.PrintLogInfo(&name, 400, "AssignPackageToStudent - BindJSON", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to assign package", "success": false, "error": utils.TranslateValidationError(err)})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal menetapkan paket", "success": false, "error": utils.TranslateValidationError(err)})
 		return
 	}
 
 	if err := h.uc.AssignPackageToStudent(c.Request.Context(), req.StudentUUID, req.PackageID); err != nil {
 		utils.PrintLogInfo(&name, 500, "AssignPackageToStudent - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to assign package", "success": false, "error": utils.TranslateDBError(err)})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menetapkan paket", "success": false, "error": utils.TranslateDBError(err)})
 		return
 	}
 
 	utils.PrintLogInfo(&name, 200, "AssignPackageToStudent", nil)
-	c.JSON(http.StatusOK, gin.H{"message": "Package assigned to student successfully", "success": true})
+	c.JSON(http.StatusOK, gin.H{"message": "Paket berhasil ditetapkan ke siswa", "success": true})
 }
 
 // TEACHER =====================================================================================================
@@ -320,7 +320,7 @@ func (h *AdminHandler) CreateTeacher(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   utils.TranslateValidationError(err),
-			"massage": "Failed to create teacher",
+			"massage": "Gagal membuat guru",
 		})
 		return
 	}
@@ -333,7 +333,7 @@ func (h *AdminHandler) CreateTeacher(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   utils.TranslateDBError(err),
-			"massage": "Failed to create teacher",
+			"massage": "Gagal membuat guru",
 		})
 		return
 	}
@@ -342,7 +342,7 @@ func (h *AdminHandler) CreateTeacher(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
 		"data":    created,
-		"message": "Teacher created successfully",
+		"message": "Guru berhasil dibuat",
 	})
 }
 
@@ -356,7 +356,7 @@ func (h *AdminHandler) UpdateTeacher(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   utils.TranslateValidationError(err),
-			"massage": "Failed to update teacher profile",
+			"massage": "Gagal memperbarui profil guru",
 		})
 		return
 	}
@@ -369,7 +369,7 @@ func (h *AdminHandler) UpdateTeacher(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   utils.TranslateDBError(err),
-			"message": "Failed to update teacher profile",
+			"message": "Gagal memperbarui profil guru",
 		})
 		return
 	}
@@ -377,7 +377,7 @@ func (h *AdminHandler) UpdateTeacher(c *gin.Context) {
 	utils.PrintLogInfo(&adminName, 200, "UpdateTeacher", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Teacher profile updated",
+		"message": "Profil guru berhasil diperbarui",
 	})
 }
 
@@ -385,11 +385,11 @@ func (h *AdminHandler) GetAllTeachers(c *gin.Context) {
 	teachers, err := h.uc.GetAllTeachers(c.Request.Context())
 	if err != nil {
 		utils.PrintLogInfo(nil, 500, "GetAllTeachers - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to retrieve teachers"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal mengambil data guru"})
 		return
 	}
 	utils.PrintLogInfo(nil, 200, "GetAllTeachers", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": teachers, "message": "Teachers retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": teachers, "message": "Data guru berhasil diambil"})
 }
 
 func (h *AdminHandler) GetTeacherByUUID(c *gin.Context) {
@@ -397,12 +397,12 @@ func (h *AdminHandler) GetTeacherByUUID(c *gin.Context) {
 	teacher, err := h.uc.GetTeacherByUUID(c.Request.Context(), uuid)
 	if err != nil {
 		utils.PrintLogInfo(&uuid, 500, "GetTeacherByUUID - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to retrieve teacher"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal mengambil data guru"})
 		return
 	}
 
 	utils.PrintLogInfo(&uuid, 200, "GetTeacherByUUID", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": teacher, "message": "Teacher retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": teacher, "message": "Data guru berhasil diambil"})
 }
 
 // Managers =====================================================================================================
@@ -415,7 +415,7 @@ func (h *AdminHandler) CreateManager(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   utils.TranslateValidationError(err),
-			"massage": "Failed to create manager",
+			"massage": "Gagal membuat manajer",
 		})
 		return
 	}
@@ -428,7 +428,7 @@ func (h *AdminHandler) CreateManager(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   utils.TranslateDBError(err),
-			"massage": "Failed to create manager",
+			"massage": "Gagal membuat manajer",
 		})
 		return
 	}
@@ -437,7 +437,7 @@ func (h *AdminHandler) CreateManager(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
 		"data":    created,
-		"message": "Manager created successfully",
+		"message": "Manajer berhasil dibuat",
 	})
 }
 
@@ -451,7 +451,7 @@ func (h *AdminHandler) UpdateManager(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   utils.TranslateValidationError(err),
-			"massage": "Failed to update manager profile",
+			"massage": "Gagal memperbarui profil manajer",
 		})
 		return
 	}
@@ -464,7 +464,7 @@ func (h *AdminHandler) UpdateManager(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   utils.TranslateDBError(err),
-			"message": "Failed to update manager profile",
+			"message": "Gagal memperbarui profil manajer",
 		})
 		return
 	}
@@ -472,7 +472,7 @@ func (h *AdminHandler) UpdateManager(c *gin.Context) {
 	utils.PrintLogInfo(&adminName, 200, "UpdateManager", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Manager profile updated",
+		"message": "Profil manajer berhasil diperbarui",
 	})
 }
 
@@ -483,13 +483,13 @@ func (h *AdminHandler) GetAllManagers(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
-			"message": "Failed to retrieve managers",
+			"message": "Gagal mengambil data manajer",
 		},
 		)
 		return
 	}
 	utils.PrintLogInfo(nil, 200, "GetAllManagers", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": managers, "message": "Managers retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": managers, "message": "Data manajer berhasil diambil"})
 }
 
 func (h *AdminHandler) GetManagerByUUID(c *gin.Context) {
@@ -497,12 +497,12 @@ func (h *AdminHandler) GetManagerByUUID(c *gin.Context) {
 	teacher, err := h.uc.GetManagerByUUID(c.Request.Context(), uuid)
 	if err != nil {
 		utils.PrintLogInfo(&uuid, 500, "GetManagerByUUID - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to retrieve manager"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal mengambil data manajer"})
 		return
 	}
 
 	utils.PrintLogInfo(&uuid, 200, "GetManagerByUUID", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": teacher, "message": "Manager retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": teacher, "message": "Data manajer berhasil diambil"})
 }
 
 func (h *AdminHandler) DeleteUser(c *gin.Context) {
@@ -510,11 +510,11 @@ func (h *AdminHandler) DeleteUser(c *gin.Context) {
 	name := utils.GetAPIHitter(c)
 	if err := h.uc.DeleteUser(c.Request.Context(), uuid); err != nil {
 		utils.PrintLogInfo(&name, 500, "Turn Off - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to turn off user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal menonaktifkan pengguna"})
 		return
 	}
 	utils.PrintLogInfo(&name, 200, "Turn Off", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "User turned off successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Pengguna berhasil dinonaktifkan"})
 }
 
 func (h *AdminHandler) CreateInstrument(c *gin.Context) {
@@ -522,7 +522,7 @@ func (h *AdminHandler) CreateInstrument(c *gin.Context) {
 	name := utils.GetAPIHitter(c)
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.PrintLogInfo(&name, 400, "CreateInstrument - BindJSON", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to create instrument", "success": false, "error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal membuat instrumen", "success": false, "error": err.Error()})
 		return
 	}
 
@@ -530,11 +530,11 @@ func (h *AdminHandler) CreateInstrument(c *gin.Context) {
 	created, err := h.uc.CreateInstrument(c.Request.Context(), inst)
 	if err != nil {
 		utils.PrintLogInfo(&name, 500, "CreateInstrument - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to create instrument", "success": false, "error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal membuat instrumen", "success": false, "error": err.Error()})
 		return
 	}
 	utils.PrintLogInfo(&name, 201, "CreateInstrument", nil)
-	c.JSON(http.StatusCreated, gin.H{"message": "Instrument created successfully", "success": true, "data": created})
+	c.JSON(http.StatusCreated, gin.H{"message": "Instrumen berhasil dibuat", "success": true, "data": created})
 }
 
 func (h *AdminHandler) UpdateInstrument(c *gin.Context) {
@@ -543,14 +543,14 @@ func (h *AdminHandler) UpdateInstrument(c *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		utils.PrintLogInfo(&name, 400, "UpdateInstrument - Atoi", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to update instrument", "success": false, "error": "Invalid instrument ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal memperbarui instrumen", "success": false, "error": "ID instrumen tidak valid"})
 		return
 	}
 
 	var req UpdateInstrumentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.PrintLogInfo(&name, 400, "UpdateInstrument - BindJSON", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to update instrument", "success": false, "error": utils.TranslateValidationError(err)})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal memperbarui instrumen", "success": false, "error": utils.TranslateValidationError(err)})
 		return
 	}
 
@@ -564,12 +564,12 @@ func (h *AdminHandler) UpdateInstrument(c *gin.Context) {
 
 	if err := h.uc.UpdateInstrument(c.Request.Context(), inst); err != nil {
 		utils.PrintLogInfo(&name, 500, "UpdateInstrument - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to update instrument"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal memperbarui instrumen"})
 		return
 	}
 
 	utils.PrintLogInfo(&name, 200, "UpdateInstrument", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Instrument updated successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Instrumen berhasil diperbarui"})
 }
 
 func (h *AdminHandler) DeleteInstrument(c *gin.Context) {
@@ -579,18 +579,18 @@ func (h *AdminHandler) DeleteInstrument(c *gin.Context) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		utils.PrintLogInfo(&name, 400, "DeleteInstrument - Atoi", &err)
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Failed to delete instrument", "success": false, "error": "Invalid instrument ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal menghapus instrumen", "success": false, "error": "ID instrumen tidak valid"})
 		return
 	}
 
 	if err := h.uc.DeleteInstrument(c.Request.Context(), id); err != nil {
 		utils.PrintLogInfo(&name, 500, "DeleteInstrument - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to delete instrument", "success": false, "error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Gagal menghapus instrumen", "success": false, "error": err.Error()})
 		return
 	}
 
 	utils.PrintLogInfo(&name, 200, "DeleteInstrument", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Instrument deleted"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Instrumen berhasil dihapus"})
 }
 
 func (h *AdminHandler) GetAllPackages(c *gin.Context) {
@@ -602,7 +602,7 @@ func (h *AdminHandler) GetAllPackages(c *gin.Context) {
 		return
 	}
 	utils.PrintLogInfo(&name, 200, "GetAllPackages", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": pkgs, "message": "Packages retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": pkgs, "message": "Data paket berhasil diambil"})
 }
 
 func (h *AdminHandler) GetAllInstruments(c *gin.Context) {
@@ -615,18 +615,18 @@ func (h *AdminHandler) GetAllInstruments(c *gin.Context) {
 		return
 	}
 	utils.PrintLogInfo(&name, 200, "GetAllInstruments", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": insts, "message": "Instruments retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": insts, "message": "Data instrumen berhasil diambil"})
 }
 
 func (h *AdminHandler) GetAllUsers(c *gin.Context) {
 	users, err := h.uc.GetAllUsers(c.Request.Context())
 	if err != nil {
 		utils.PrintLogInfo(nil, 500, "GetAllUsers - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to retrieve users"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal mengambil data pengguna"})
 		return
 	}
 	utils.PrintLogInfo(nil, 200, "GetAllUsers", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": users, "message": "Users retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": users, "message": "Data pengguna berhasil diambil"})
 }
 
 func (h *AdminHandler) GetAllStudents(c *gin.Context) {
@@ -634,11 +634,11 @@ func (h *AdminHandler) GetAllStudents(c *gin.Context) {
 	students, err := h.uc.GetAllStudents(c.Request.Context())
 	if err != nil {
 		utils.PrintLogInfo(&name, 500, "GetAllStudents - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to retrieve students"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal mengambil data siswa"})
 		return
 	}
 	utils.PrintLogInfo(&name, 200, "GetAllStudents", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": students, "message": "Students retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": students, "message": "Data siswa berhasil diambil"})
 }
 
 func (h *AdminHandler) GetStudentByUUID(c *gin.Context) {
@@ -647,12 +647,12 @@ func (h *AdminHandler) GetStudentByUUID(c *gin.Context) {
 	student, err := h.uc.GetStudentByUUID(c.Request.Context(), uuid)
 	if err != nil {
 		utils.PrintLogInfo(&name, 500, "GetStudentByUUID - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to retrieve student"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal mengambil data siswa"})
 		return
 	}
 
 	utils.PrintLogInfo(&name, 200, "GetStudentByUUID", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": student, "message": "Student retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": student, "message": "Data siswa berhasil diambil"})
 }
 
 func (h *AdminHandler) ClearUserDeletedAt(c *gin.Context) {
@@ -660,9 +660,9 @@ func (h *AdminHandler) ClearUserDeletedAt(c *gin.Context) {
 	uuid := c.Param("uuid")
 	if err := h.uc.ClearUserDeletedAt(c.Request.Context(), uuid); err != nil {
 		utils.PrintLogInfo(&name, 500, "ClearUserDeletedAt - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to restore user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal memulihkan pengguna"})
 		return
 	}
 	utils.PrintLogInfo(&name, 200, "ClearUserDeletedAt", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "User restored successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Pengguna berhasil dipulihkan"})
 }

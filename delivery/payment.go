@@ -58,7 +58,7 @@ func (h *PaymentHandler) CreateInvoice(c *gin.Context) {
 		utils.PrintLogInfo(&name, 401, "CreateInvoice", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
 			"message": "Gagal membuat invoice",
 		})
 		return
@@ -108,7 +108,7 @@ func (h *PaymentHandler) GetPaymentHistory(c *gin.Context) {
 		utils.PrintLogInfo(&name, 401, "GetPaymentHistory", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
 			"message": "Gagal mengambil riwayat pembayaran",
 		})
 		return
@@ -146,7 +146,7 @@ func (h *PaymentHandler) HandleXenditWebhook(c *gin.Context) {
 		log.Println("⚠️  XENDIT_WEBHOOK_TOKEN not configured")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"message": "Webhook not configured",
+			"message": "Webhook tidak dikonfigurasi",
 		})
 		return
 	}
@@ -155,7 +155,7 @@ func (h *PaymentHandler) HandleXenditWebhook(c *gin.Context) {
 		log.Printf("❌ Webhook: invalid callback token received")
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Invalid callback token",
+			"message": "Token callback tidak valid",
 		})
 		return
 	}
@@ -166,7 +166,7 @@ func (h *PaymentHandler) HandleXenditWebhook(c *gin.Context) {
 		log.Printf("❌ Webhook: failed to parse payload: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Invalid payload",
+			"message": "Payload tidak valid",
 		})
 		return
 	}
@@ -179,7 +179,7 @@ func (h *PaymentHandler) HandleXenditWebhook(c *gin.Context) {
 		// Still return 200 to prevent Xendit from retrying
 		c.JSON(http.StatusOK, gin.H{
 			"success": false,
-			"message": "Webhook processing error",
+			"message": "Error pemrosesan webhook",
 			"error":   err.Error(),
 		})
 		return
@@ -187,7 +187,7 @@ func (h *PaymentHandler) HandleXenditWebhook(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Webhook processed successfully",
+		"message": "Webhook berhasil diproses",
 	})
 }
 
@@ -204,7 +204,7 @@ func (h *PaymentHandler) GetTotalProfit(c *gin.Context) {
 		utils.PrintLogInfo(&name, 400, "GetTotalProfit - BindQuery", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid filter parameters",
+			"error":   "Parameter filter tidak valid",
 			"message": "Gagal mengambil data profit",
 		})
 		return
@@ -240,7 +240,7 @@ func (h *PaymentHandler) GetPaymentHistoryAdmin(c *gin.Context) {
 		utils.PrintLogInfo(&name, 400, "GetPaymentHistoryAdmin - BindQuery", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid filter parameters",
+			"error":   "Parameter filter tidak valid",
 			"message": "Gagal mengambil riwayat pembayaran",
 		})
 		return

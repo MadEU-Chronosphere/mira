@@ -117,7 +117,7 @@ func (s *adminService) GetManagerByUUID(ctx context.Context, uuid string) (*doma
 
 func (s *adminService) GetPackagesByID(ctx context.Context, id int) (*domain.Package, error) {
 	if id <= 0 {
-		return nil, errors.New("invalid package id")
+		return nil, errors.New("ID paket tidak valid")
 	}
 	return s.adminRepo.GetPackagesByID(ctx, id)
 }
@@ -125,10 +125,10 @@ func (s *adminService) GetPackagesByID(ctx context.Context, id int) (*domain.Pac
 // AssignPackageToStudent assigns a package to a student
 func (s *adminService) AssignPackageToStudent(ctx context.Context, studentUUID string, packageID int) error {
 	if studentUUID == "" {
-		return errors.New("student uuid is required")
+		return errors.New("UUID siswa wajib diisi")
 	}
 	if packageID <= 0 {
-		return errors.New("invalid package id")
+		return errors.New("ID paket tidak valid")
 	}
 
 	dataStudent, dataPackage, err := s.adminRepo.AssignPackageToStudent(ctx, studentUUID, packageID)
@@ -181,7 +181,7 @@ Terima kasih,
 // CreatePackage creates a package
 func (s *adminService) CreatePackage(ctx context.Context, pkg *domain.Package) (*domain.Package, error) {
 	if pkg == nil {
-		return nil, errors.New("pkg is nil")
+		return nil, errors.New("paket tidak boleh kosong")
 	}
 	created, err := s.adminRepo.CreatePackage(ctx, pkg)
 	if err != nil {
@@ -192,14 +192,14 @@ func (s *adminService) CreatePackage(ctx context.Context, pkg *domain.Package) (
 
 func (s *adminService) UpdatePackage(ctx context.Context, pkg *domain.Package) error {
 	if pkg == nil {
-		return errors.New("pkg is nil")
+		return errors.New("paket tidak boleh kosong")
 	}
 	return s.adminRepo.UpdatePackage(ctx, pkg)
 }
 
 func (s *adminService) DeletePackage(ctx context.Context, id int) error {
 	if id <= 0 {
-		return errors.New("invalid package id")
+		return errors.New("ID paket tidak valid")
 	}
 	return s.adminRepo.DeletePackage(ctx, id)
 }
@@ -207,10 +207,10 @@ func (s *adminService) DeletePackage(ctx context.Context, id int) error {
 // CreateInstrument creates a new instrument (note: accepts *domain.Instrument)
 func (s *adminService) CreateInstrument(ctx context.Context, instrument *domain.Instrument) (*domain.Instrument, error) {
 	if instrument == nil {
-		return nil, errors.New("instrument is nil")
+		return nil, errors.New("instrumen tidak boleh kosong")
 	}
 	if instrument.Name == "" {
-		return nil, errors.New("instrument name cannot be empty")
+		return nil, errors.New("nama instrumen tidak boleh kosong")
 	}
 	created, err := s.adminRepo.CreateInstrument(ctx, instrument)
 	if err != nil {
@@ -221,14 +221,14 @@ func (s *adminService) CreateInstrument(ctx context.Context, instrument *domain.
 
 func (s *adminService) UpdateInstrument(ctx context.Context, instrument *domain.Instrument) error {
 	if instrument == nil {
-		return errors.New("instrument is nil")
+		return errors.New("instrumen tidak boleh kosong")
 	}
 	return s.adminRepo.UpdateInstrument(ctx, instrument)
 }
 
 func (s *adminService) DeleteInstrument(ctx context.Context, id int) error {
 	if id <= 0 {
-		return errors.New("invalid instrument id")
+		return errors.New("ID instrumen tidak valid")
 	}
 	return s.adminRepo.DeleteInstrument(ctx, id)
 }
@@ -256,7 +256,7 @@ func (s *adminService) GetAllUsers(ctx context.Context) ([]domain.User, error) {
 // GetStudentByUUID fetches a student by UUID
 func (s *adminService) GetStudentByUUID(ctx context.Context, uuid string) (*domain.User, error) {
 	if uuid == "" {
-		return nil, errors.New("uuid is required")
+		return nil, errors.New("UUID wajib diisi")
 	}
 	return s.adminRepo.GetStudentByUUID(ctx, uuid)
 }

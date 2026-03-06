@@ -47,8 +47,8 @@ func (h *TeacherHandler) DeleteAvailabilityBasedOnDay(c *gin.Context) {
 		utils.PrintLogInfo(&name, http.StatusUnauthorized, "DeleteAvailabilityBasedOnDay", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
-			"message": "Failed to delete availability based on day",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
+			"message": "Gagal menghapus ketersediaan berdasarkan hari",
 		})
 		return
 	}
@@ -61,14 +61,14 @@ func (h *TeacherHandler) DeleteAvailabilityBasedOnDay(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
-			"message": "Failed to delete availability based on day",
+			"message": "Gagal menghapus ketersediaan berdasarkan hari",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": fmt.Sprintf("Successfully deleted availability for %s", dayOfWeek),
+		"message": fmt.Sprintf("Berhasil menghapus ketersediaan untuk %s", dayOfWeek),
 	})
 }
 
@@ -79,8 +79,8 @@ func (h *TeacherHandler) GetMyClassHistory(c *gin.Context) {
 		utils.PrintLogInfo(&name, http.StatusUnauthorized, "GetMyClassHistory", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
-			"message": "Failed to finish class",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
+			"message": "Gagal menyelesaikan kelas",
 		})
 		return
 	}
@@ -92,7 +92,7 @@ func (h *TeacherHandler) GetMyClassHistory(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
-			"message": "Failed to get class history",
+			"message": "Gagal mengambil riwayat kelas",
 		})
 		return
 	}
@@ -112,8 +112,8 @@ func (h *TeacherHandler) FinishClass(c *gin.Context) {
 		utils.PrintLogInfo(&name, http.StatusUnauthorized, "FinishClass - MissingUserUUID", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
-			"message": "Failed to finish class",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
+			"message": "Gagal menyelesaikan kelas",
 		})
 		return
 	}
@@ -125,8 +125,8 @@ func (h *TeacherHandler) FinishClass(c *gin.Context) {
 		utils.PrintLogInfo(&name, http.StatusBadRequest, "FinishClass - InvalidBookingID", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid booking ID",
-			"message": "Failed to finish class",
+			"error":   "ID pemesanan tidak valid",
+			"message": "Gagal menyelesaikan kelas",
 		})
 		return
 	}
@@ -139,7 +139,7 @@ func (h *TeacherHandler) FinishClass(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   utils.TranslateValidationError(err),
-			"message": "Failed to finish class",
+			"message": "Gagal menyelesaikan kelas",
 		})
 		return
 	}
@@ -151,7 +151,7 @@ func (h *TeacherHandler) FinishClass(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   err.Error(),
-			"message": "Failed to finish class",
+			"message": "Gagal menyelesaikan kelas",
 		})
 		return
 	}
@@ -174,7 +174,7 @@ func (h *TeacherHandler) FinishClass(c *gin.Context) {
 		c.JSON(status, gin.H{
 			"success": false,
 			"error":   errorMsg,
-			"message": "Failed to finish class",
+			"message": "Gagal menyelesaikan kelas",
 		})
 		return
 	}
@@ -183,7 +183,7 @@ func (h *TeacherHandler) FinishClass(c *gin.Context) {
 	utils.PrintLogInfo(&name, http.StatusOK, "FinishClass", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Class finished successfully",
+		"message": "Kelas berhasil diselesaikan",
 	})
 }
 
@@ -194,8 +194,8 @@ func (h *TeacherHandler) CancelBookedClass(c *gin.Context) {
 		utils.PrintLogInfo(&name, 401, "CancelBookedClass", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
-			"message": "Failed to cancel booked class",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
+			"message": "Gagal membatalkan kelas yang dipesan",
 		})
 		return
 	}
@@ -207,8 +207,8 @@ func (h *TeacherHandler) CancelBookedClass(c *gin.Context) {
 		utils.PrintLogInfo(&name, 400, "CancelBookedClass", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid booking ID parameter",
-			"message": "Failed to cancel booked class",
+			"error":   "Parameter ID pemesanan tidak valid",
+			"message": "Gagal membatalkan kelas yang dipesan",
 		})
 		return
 	}
@@ -219,8 +219,8 @@ func (h *TeacherHandler) CancelBookedClass(c *gin.Context) {
 		utils.PrintLogInfo(&name, 400, "CancelBookedClass", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"error":   "Invalid request body",
-			"message": "Failed to cancel booked class",
+			"error":   "Body permintaan tidak valid",
+			"message": "Gagal membatalkan kelas yang dipesan",
 		})
 		return
 	}
@@ -236,7 +236,7 @@ func (h *TeacherHandler) CancelBookedClass(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
-			"message": "Failed to cancel booked class",
+			"message": "Gagal membatalkan kelas yang dipesan",
 		})
 		return
 	}
@@ -244,7 +244,7 @@ func (h *TeacherHandler) CancelBookedClass(c *gin.Context) {
 	utils.PrintLogInfo(&name, 200, "CancelBookedClass", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Booked class cancelled successfully",
+		"message": "Kelas yang dipesan berhasil dibatalkan",
 	})
 }
 
@@ -255,8 +255,8 @@ func (h *TeacherHandler) GetAllBookedClass(c *gin.Context) {
 		utils.PrintLogInfo(&name, 401, "GetAllBookedClass", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
-			"message": "Failed to Get All Booked Class",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
+			"message": "Gagal mendapatkan semua kelas yang dipesan",
 		})
 		return
 	}
@@ -267,7 +267,7 @@ func (h *TeacherHandler) GetAllBookedClass(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
-			"message": "Failed to Get All Booked Class",
+			"message": "Gagal mendapatkan semua kelas yang dipesan",
 		})
 		return
 	}
@@ -287,7 +287,7 @@ func (h *TeacherHandler) AddAvailability(c *gin.Context) {
 		utils.PrintLogInfo(&name, 400, "AddAvailability - BindJSON", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Failed to add availability",
+			"message": "Gagal menambahkan ketersediaan",
 			"error":   utils.TranslateValidationError(err),
 		})
 		return
@@ -299,8 +299,8 @@ func (h *TeacherHandler) AddAvailability(c *gin.Context) {
 		utils.PrintLogInfo(&name, 401, "AddAvailability - MissingUserUUID", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Failed to add availability",
-			"error":   "Unauthorized: missing user context",
+			"message": "Gagal menambahkan ketersediaan",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
 		})
 		return
 	}
@@ -313,7 +313,7 @@ func (h *TeacherHandler) AddAvailability(c *gin.Context) {
 		utils.PrintLogInfo(&name, 400, "AddAvailability - ConvertDTO", &err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "Failed to add availability",
+			"message": "Gagal menambahkan ketersediaan",
 			"error":   err.Error(),
 		})
 		return
@@ -338,7 +338,7 @@ func (h *TeacherHandler) AddAvailability(c *gin.Context) {
 		utils.PrintLogInfo(&name, statusCode, "AddAvailability - UseCaseError", &err)
 		c.JSON(statusCode, gin.H{
 			"success": false,
-			"message": "Failed to add availability",
+			"message": "Gagal menambahkan ketersediaan",
 			"error":   errorMsg,
 		})
 		return
@@ -469,8 +469,8 @@ func (th *TeacherHandler) GetMySchedules(c *gin.Context) {
 		utils.PrintLogInfo(&name, 401, "GetMySchedules", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
-			"message": "Failed to Get My Schedules",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
+			"message": "Gagal mendapatkan jadwal saya",
 		})
 		return
 	}
@@ -481,7 +481,7 @@ func (th *TeacherHandler) GetMySchedules(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
-			"message": "Failed to Get My Schedules",
+			"message": "Gagal mendapatkan jadwal saya",
 		})
 		return
 	}
@@ -489,7 +489,7 @@ func (th *TeacherHandler) GetMySchedules(c *gin.Context) {
 	utils.PrintLogInfo(&name, 200, "GetMySchedules", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Fetched schedules successfully",
+		"message": "Jadwal berhasil diambil",
 		"data":    teacherSchedules, // ✅ not &teacherSchedules
 	})
 }
@@ -501,8 +501,8 @@ func (th *TeacherHandler) GetMyProfile(c *gin.Context) {
 		utils.PrintLogInfo(&name, 401, "GetMyProfile", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
-			"message": "Failed to Get My Profile",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
+			"message": "Gagal mendapatkan profil saya",
 		})
 		return
 	}
@@ -514,7 +514,7 @@ func (th *TeacherHandler) GetMyProfile(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
-			"message": "Failed to Get My Profile",
+			"message": "Gagal mendapatkan profil saya",
 		})
 		return
 	}
@@ -534,8 +534,8 @@ func (th *TeacherHandler) UpdateTeacherData(c *gin.Context) {
 		utils.PrintLogInfo(&name, 401, "GetMyProfile", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
-			"message": "Failed to Update Teacher Data",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
+			"message": "Gagal memperbarui data guru",
 		})
 		return
 	}
@@ -546,7 +546,7 @@ func (th *TeacherHandler) UpdateTeacherData(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   utils.TranslateValidationError(err),
-			"message": "Failed to Update Teacher Data",
+			"message": "Gagal memperbarui data guru",
 		})
 		return
 	}
@@ -558,7 +558,7 @@ func (th *TeacherHandler) UpdateTeacherData(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   utils.TranslateDBError(err),
-			"message": "Failed to Update Teacher Data",
+			"message": "Gagal memperbarui data guru",
 		})
 		return
 	}
@@ -566,7 +566,7 @@ func (th *TeacherHandler) UpdateTeacherData(c *gin.Context) {
 	utils.PrintLogInfo(&name, 200, "UpdateTeacher", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Teacher profile updated",
+		"message": "Profil guru berhasil diperbarui",
 	})
 }
 
@@ -577,8 +577,8 @@ func (th *TeacherHandler) DeleteAddAvailability(c *gin.Context) {
 		utils.PrintLogInfo(&name, 401, "GetMyProfile", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Failed to Delete Availability",
-			"error":   "Unauthorized: missing user context",
+			"message": "Gagal menghapus ketersediaan",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
 		})
 		return
 	}
@@ -589,8 +589,8 @@ func (th *TeacherHandler) DeleteAddAvailability(c *gin.Context) {
 		utils.PrintLogInfo(&name, 400, "DeleteAddAvailability - InvalidID", &err)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"message": "Failed to Delete Availability",
-			"error":   "atoi failure",
+			"message": "Gagal menghapus ketersediaan",
+			"error":   "Gagal konversi ID",
 		})
 		return
 	}
@@ -600,7 +600,7 @@ func (th *TeacherHandler) DeleteAddAvailability(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   utils.TranslateDBError(err),
-			"message": "Failed to Delete Availability",
+			"message": "Gagal menghapus ketersediaan",
 		})
 		return
 	}
@@ -608,6 +608,6 @@ func (th *TeacherHandler) DeleteAddAvailability(c *gin.Context) {
 	utils.PrintLogInfo(&name, 200, "DeleteAddAvailability", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Availability deleted successfully",
+		"message": "Ketersediaan berhasil dihapus",
 	})
 }

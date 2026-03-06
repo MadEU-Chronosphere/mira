@@ -38,8 +38,8 @@ func (h *ManagerHandler) UpdateManager(c *gin.Context) {
 		utils.PrintLogInfo(&managerName, 401, "UpdateManager", nil)
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"success": false,
-			"error":   "Unauthorized: missing user context",
-			"message": "Failed to update manager profile",
+			"error":   "Tidak terotorisasi: konteks pengguna tidak ditemukan",
+			"message": "Gagal memperbarui profil manajer",
 		})
 		return
 	}
@@ -50,7 +50,7 @@ func (h *ManagerHandler) UpdateManager(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   utils.TranslateValidationError(err),
-			"massage": "Failed to update manager profile",
+			"massage": "Gagal memperbarui profil manajer",
 		})
 
 		return
@@ -68,14 +68,14 @@ func (h *ManagerHandler) UpdateManager(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   utils.TranslateDBError(err),
-			"message": "Failed to update manager profile",
+			"message": "Gagal memperbarui profil manajer",
 		})
 		return
 	}
 	utils.PrintLogInfo(&managerName, 200, "UpdateManager", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Manager profile updated",
+		"message": "Profil manajer berhasil diperbarui",
 	})
 }
 
@@ -84,11 +84,11 @@ func (h *ManagerHandler) GetAllStudents(c *gin.Context) {
 	students, err := h.uc.GetAllStudents(c.Request.Context())
 	if err != nil {
 		utils.PrintLogInfo(&name, 500, "GetAllStudents - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to retrieve students"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal mengambil data siswa"})
 		return
 	}
 	utils.PrintLogInfo(&name, 200, "GetAllStudents", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": students, "message": "Students retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": students, "message": "Data siswa berhasil diambil"})
 }
 
 func (h *ManagerHandler) GetStudentByUUID(c *gin.Context) {
@@ -97,12 +97,12 @@ func (h *ManagerHandler) GetStudentByUUID(c *gin.Context) {
 	student, err := h.uc.GetStudentByUUID(c.Request.Context(), uuid)
 	if err != nil {
 		utils.PrintLogInfo(&name, 500, "GetStudentByUUID - UseCase", &err)
-		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Failed to retrieve student"})
+		c.JSON(http.StatusInternalServerError, gin.H{"success": false, "error": err.Error(), "message": "Gagal mengambil data siswa"})
 		return
 	}
 
 	utils.PrintLogInfo(&name, 200, "GetStudentByUUID", nil)
-	c.JSON(http.StatusOK, gin.H{"success": true, "data": student, "message": "Student retrieved successfully"})
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": student, "message": "Data siswa berhasil diambil"})
 }
 
 func (h *ManagerHandler) ModifyStudentPackageQuota(c *gin.Context) {
@@ -111,7 +111,7 @@ func (h *ManagerHandler) ModifyStudentPackageQuota(c *gin.Context) {
 	studentUUID := c.Param("uuid")
 	packageID, err := strconv.Atoi(c.Param("package_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Failed to modify student quota", "error": "Invalid package ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"success": false, "message": "Gagal mengubah kuota siswa", "error": "ID paket tidak valid"})
 		return
 	}
 
@@ -123,7 +123,7 @@ func (h *ManagerHandler) ModifyStudentPackageQuota(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   utils.TranslateValidationError(err),
-			"message": "Failed to modify student quota",
+			"message": "Gagal mengubah kuota siswa",
 		})
 		return
 	}
@@ -133,7 +133,7 @@ func (h *ManagerHandler) ModifyStudentPackageQuota(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
 			"error":   err.Error(),
-			"message": "Failed to modify student quota",
+			"message": "Gagal mengubah kuota siswa",
 		})
 		return
 	}
@@ -141,6 +141,6 @@ func (h *ManagerHandler) ModifyStudentPackageQuota(c *gin.Context) {
 	utils.PrintLogInfo(&name, 200, "ModifyStudentPackageQuota", nil)
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Package quota modified successfully",
+		"message": "Kuota paket berhasil diubah",
 	})
 }
