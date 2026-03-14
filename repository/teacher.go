@@ -192,8 +192,10 @@ func (r *teacherRepository) FinishClass(ctx context.Context, bookingID int, teac
 
 	loc, _ := time.LoadLocation("Asia/Makassar")
 
+	classDateLoc := booking.ClassDate.In(loc)
+
 	classStart := time.Date(
-		booking.ClassDate.Year(), booking.ClassDate.Month(), booking.ClassDate.Day(),
+		classDateLoc.Year(), classDateLoc.Month(), classDateLoc.Day(),
 		parsedStart.Hour(), parsedStart.Minute(), parsedStart.Second(), 0,
 		loc,
 	)
@@ -212,7 +214,7 @@ func (r *teacherRepository) FinishClass(ctx context.Context, bookingID int, teac
 	} else {
 		// 60-min package: class ends at schedule end time
 		classEnd = time.Date(
-			booking.ClassDate.Year(), booking.ClassDate.Month(), booking.ClassDate.Day(),
+			classDateLoc.Year(), classDateLoc.Month(), classDateLoc.Day(),
 			parsedEnd.Hour(), parsedEnd.Minute(), parsedEnd.Second(), 0,
 			loc,
 		)
@@ -517,8 +519,9 @@ func (r *teacherRepository) GetAllBookedClass(ctx context.Context, teacherUUID s
 
 		// Create actual datetime by combining date from ClassDate with time from Schedule
 		// Make sure to use loc timezone for class start & end so comparison is accurate.
+		classDateLoc := classDate.In(loc)
 		classStart := time.Date(
-			classDate.Year(), classDate.Month(), classDate.Day(),
+			classDateLoc.Year(), classDateLoc.Month(), classDateLoc.Day(),
 			parsedStart.Hour(), parsedStart.Minute(), 0, 0,
 			loc,
 		)
@@ -631,15 +634,19 @@ func (r *teacherRepository) CancelBookedClass(
 		return nil, errors.New("anda tidak memiliki akses ke booking ini")
 	}
 
+	loc, _ := time.LoadLocation("Asia/Makassar")
+	now := time.Now().In(loc)
+	classDateLoc := booking.ClassDate.In(loc)
+
 	// Check if class is in the future
-	if booking.ClassDate.Before(time.Now()) {
+	if classDateLoc.Before(now) {
 		tx.Rollback()
 		return nil, errors.New("tidak bisa membatalkan kelas yang sudah lewat")
 	}
 
 	// H-1 cancellation rule (24 hours before class)
-	minCancelTime := booking.ClassDate.Add(-24 * time.Hour)
-	if time.Now().After(minCancelTime) {
+	minCancelTime := classDateLoc.Add(-24 * time.Hour)
+	if now.After(minCancelTime) {
 		tx.Rollback()
 		return nil, errors.New("pembatalan hanya bisa dilakukan minimal H-1 (24 jam) sebelum kelas")
 	}

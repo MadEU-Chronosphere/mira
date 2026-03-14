@@ -92,13 +92,8 @@ func GetNextClassDate(dayOfWeek string, startTime time.Time) time.Time {
 		daysUntil += 7
 	}
 
-	// If it's today, schedule for next week
-	if daysUntil == 0 {
-		daysUntil = 7
-	}
-
 	nextDate := now.AddDate(0, 0, daysUntil)
-	return time.Date(
+	targetTime := time.Date(
 		nextDate.Year(),
 		nextDate.Month(),
 		nextDate.Day(),
@@ -106,6 +101,16 @@ func GetNextClassDate(dayOfWeek string, startTime time.Time) time.Time {
 		startTime.Minute(),
 		0, 0, loc,
 	)
+
+	// Enforce H-1 rule for next occurrences (must be at least 24 hours away)
+	// If the next class occurrence is less than 24 hours away (or already passed),
+	// the user cannot book it or the class is already locked.
+	// Therefore, the next legitimate occurrence is 7 days later.
+	if targetTime.Sub(now) < 24*time.Hour {
+		targetTime = targetTime.AddDate(0, 0, 7)
+	}
+
+	return targetTime
 }
 
 // GetDayName returns Indonesian day name from time.Weekday

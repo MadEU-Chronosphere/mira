@@ -87,7 +87,7 @@ func (r *studentRepository) CancelBookedClass(
 	now := time.Now().In(loc)
 
 	classDate := booking.ClassDate.In(loc)
-	bookedAt := booking.BookedAt.In(loc)
+
 
 	// Check if class is in the future
 	if classDate.Before(now) {
@@ -95,12 +95,9 @@ func (r *studentRepository) CancelBookedClass(
 		return nil, errors.New("tidak bisa membatalkan kelas yang sudah lewat")
 	}
 
-	isBookedToday := bookedAt.Year() == now.Year() && bookedAt.YearDay() == now.YearDay()
-	isClassToday := classDate.Year() == now.Year() && classDate.YearDay() == now.YearDay()
-
 	// H-1 cancellation rule (24 hours before class)
 	minCancelTime := classDate.Add(-24 * time.Hour)
-	if now.After(minCancelTime) && !(isBookedToday && isClassToday) {
+	if now.After(minCancelTime) {
 		tx.Rollback()
 		return nil, errors.New("pembatalan hanya bisa dilakukan minimal H-1 (24 jam) sebelum kelas")
 	}
@@ -387,10 +384,11 @@ func (r *studentRepository) GetMyBookedClasses(ctx context.Context, studentUUID 
 		startTimeStr := bookings[i].Schedule.StartTime
 		parsedStart, _ := time.Parse("15:04", startTimeStr)
 
+		classDateLoc := bookings[i].ClassDate.In(loc)
 		classStart := time.Date(
-			bookings[i].ClassDate.Year(),
-			bookings[i].ClassDate.Month(),
-			bookings[i].ClassDate.Day(),
+			classDateLoc.Year(),
+			classDateLoc.Month(),
+			classDateLoc.Day(),
 			parsedStart.Hour(),
 			parsedStart.Minute(),
 			0, 0, loc,
