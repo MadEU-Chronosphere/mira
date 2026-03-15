@@ -88,7 +88,26 @@ func GetNextClassDate(dayOfWeek string, startTime time.Time) time.Time {
 
 	// Calculate days until target
 	daysUntil := int(targetDay - currentDay)
-	if daysUntil < 0 {
+	
+	// If today is the target day, check if the class time is still in the future
+	if daysUntil == 0 {
+		targetTime := time.Date(
+			now.Year(),
+			now.Month(),
+			now.Day(),
+			startTime.Hour(),
+			startTime.Minute(),
+			0, 0, loc,
+		)
+		
+		// If the class time today hasn't passed yet, return today's date
+		if targetTime.After(now) {
+			return targetTime
+		}
+		
+		// If class time today has passed, we need next week
+		daysUntil = 7
+	} else if daysUntil < 0 {
 		daysUntil += 7
 	}
 
