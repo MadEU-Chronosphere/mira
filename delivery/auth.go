@@ -48,7 +48,7 @@ func NewAuthHandler(r *gin.Engine, authUC domain.AuthUseCase, db *gorm.DB) {
 	// Ping Route (no rate limiting)
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"message": "pong",
+			"message": "pong1",
 		})
 	})
 
