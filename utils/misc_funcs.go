@@ -106,9 +106,9 @@ func GetNextClassDate(dayOfWeek string, startTime time.Time) time.Time {
 	// If the next class occurrence is less than 24 hours away (or already passed),
 	// the user cannot book it or the class is already locked.
 	// Therefore, the next legitimate occurrence is 7 days later.
-	if targetTime.Sub(now) < 24*time.Hour {
-		targetTime = targetTime.AddDate(0, 0, 7)
-	}
+	// if targetTime.Sub(now) < 24*time.Hour {
+	// 	targetTime = targetTime.AddDate(0, 0, 7)
+	// }
 
 	return targetTime
 }
