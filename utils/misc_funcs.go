@@ -60,8 +60,6 @@ func CalculateEndTime(startTime string, durationHours float64) string {
 	return endTime.Format(timeLayout)
 }
 
-// TRUE
-// // GetNextClassDate calculates the next occurrence of a specific day and time
 func GetNextClassDate(dayOfWeek string, startTime time.Time) time.Time {
 	loc, err := time.LoadLocation("Asia/Makassar")
 	if err != nil {
@@ -113,7 +111,6 @@ func GetNextClassDate(dayOfWeek string, startTime time.Time) time.Time {
 
 	return targetTime
 }
-
 
 // GetDayName returns Indonesian day name from time.Weekday
 func GetDayName(weekday time.Weekday) string {
