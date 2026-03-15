@@ -139,29 +139,26 @@ func GetNextClassDate(dayOfWeek string, startTime time.Time) time.Time {
 	now := time.Now().In(loc)
 	currentDay := now.Weekday()
 
-	// Calculate days until target
-	daysUntil := int(targetDay - currentDay)
-	
-	// If today is the target day
+	// Create today's date with the target time
+	todayTarget := time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		startTime.Hour(),
+		startTime.Minute(),
+		0, 0, loc,
+	)
+
+	// If today is the target day AND the target time hasn't passed yet, return today
+	if targetDay == currentDay && todayTarget.After(now) {
+		return todayTarget
+	}
+
+	// Calculate days until next target day
+	daysUntil := (int(targetDay) - int(currentDay) + 7) % 7
 	if daysUntil == 0 {
-		targetTime := time.Date(
-			now.Year(),
-			now.Month(),
-			now.Day(),
-			startTime.Hour(),
-			startTime.Minute(),
-			0, 0, loc,
-		)
-		
-		// If the class time today hasn't passed yet, return today's date
-		if targetTime.After(now) {
-			return targetTime
-		}
-		
-		// If class time today has passed, we need next week
+		// If today is target day but time has passed, go to next week
 		daysUntil = 7
-	} else if daysUntil < 0 {
-		daysUntil += 7
 	}
 
 	nextDate := now.AddDate(0, 0, daysUntil)
