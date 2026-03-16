@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
@@ -26,6 +27,70 @@ type managerService struct {
 	messenger   *whatsmeow.Client
 }
 
+func (s *managerService) GetCancelledClassHistories(ctx context.Context) (*[]domain.ClassHistory, error) {
+	return s.managerRepo.GetCancelledClassHistories(ctx)
+}
+
+func (s *managerService) RebookWithSubstitute(ctx context.Context, req domain.RebookInput) (*domain.Booking, error) {
+	booking, err := s.managerRepo.RebookWithSubstitute(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// Notify substitute teacher via WhatsApp
+	if s.messenger != nil {
+		loc, _ := time.LoadLocation("Asia/Makassar")
+		classDate := booking.ClassDate.In(loc)
+		dayName := map[string]string{
+			"Monday": "Senin", "Tuesday": "Selasa", "Wednesday": "Rabu",
+			"Thursday": "Kamis", "Friday": "Jumat", "Saturday": "Sabtu", "Sunday": "Minggu",
+		}[classDate.Weekday().String()]
+
+		salutation := "Bapak"
+		if booking.Schedule.Teacher.Gender == "female" {
+			salutation = "Ibu"
+		}
+
+		msg := fmt.Sprintf(
+			`*PENUGASAN GURU PENGGANTI*
+
+Halo %s %s,
+
+Anda ditugaskan sebagai guru pengganti untuk kelas berikut:
+👤 *Siswa:* %s
+📅 *Hari/Tanggal:* %s, %s
+⏰ *Waktu:* %s - %s
+🎵 *Instrumen:* %s
+
+Kelas ini adalah pengganti dari kelas yang dibatalkan. Silakan selesaikan kelas dan tambahkan catatan melalui aplikasi.
+
+🌐 %s
+🔔 %s Notification System`,
+			salutation,
+			booking.Schedule.Teacher.Name,
+			booking.Student.Name,
+			dayName,
+			classDate.Format("02/01/2006"),
+			booking.Schedule.StartTime,
+			booking.Schedule.EndTime,
+			booking.PackageUsed.Package.Instrument.Name,
+			"https://www.madeu.app",
+			os.Getenv("APP_NAME"),
+		)
+
+		phone := utils.NormalizePhoneNumber(booking.Schedule.Teacher.Phone)
+		if phone != "" {
+			jid := types.NewJID(phone, types.DefaultUserServer)
+			waMsg := &waE2E.Message{Conversation: &msg}
+			go func() {
+				s.messenger.SendMessage(context.Background(), jid, waMsg)
+			}()
+		}
+	}
+
+	return booking, nil
+}
+
 // Setting
 func (s *managerService) GetSetting(ctx context.Context) (*domain.Setting, error) {
 	return s.managerRepo.GetSetting(ctx)
@@ -37,7 +102,6 @@ func (s *managerService) UpdateSetting(ctx context.Context, setting *domain.Sett
 	}
 	return s.managerRepo.UpdateSetting(ctx, setting)
 }
-
 
 // Students =====================================================================================================
 

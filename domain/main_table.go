@@ -17,6 +17,7 @@ const (
 	StatusOngoing       = "ongoing"
 	StatusUpcoming      = "upcoming"
 	StatusClassFinished = "class_finished_waiting_for_approval"
+	StatusRebooked      = "rebooked"
 
 	GenderMale   = "male"
 	GenderFemale = "female"
@@ -73,10 +74,11 @@ type Package struct {
 }
 
 type Setting struct {
-	ID              int       `gorm:"primaryKey" json:"id"`
-	RegistrationFee float64   `gorm:"not null;default:50000" json:"registration_fee"`
-	CreatedAt       time.Time `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt       time.Time `gorm:"autoUpdateTime" json:"updated_at"`
+	ID                int       `gorm:"primaryKey" json:"id"`
+	RegistrationFee   float64   `gorm:"not null;default:50000" json:"registration_fee"`
+	TeacherCommission float64   `gorm:"not null;default:0.4" json:"teacher_commission"`
+	CreatedAt         time.Time `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt         time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
 
 type StudentPackage struct {
@@ -92,12 +94,12 @@ type StudentPackage struct {
 
 // TeacherAlbum stores up to 5 profile photos for a teacher
 type TeacherAlbum struct {
-	ID          int        `gorm:"primaryKey" json:"id"`
-	TeacherUUID string     `gorm:"type:uuid;not null;index;constraint:OnDelete:CASCADE;" json:"teacher_uuid"`
-	URL         string     `gorm:"type:text;not null" json:"url"`
-	Caption     string     `gorm:"size:200" json:"caption,omitempty"`
-	Order       int        `gorm:"default:0" json:"order"` // Display order 1-5
-	CreatedAt   time.Time  `gorm:"autoCreateTime" json:"created_at"`
+	ID          int       `gorm:"primaryKey" json:"id"`
+	TeacherUUID string    `gorm:"type:uuid;not null;index;constraint:OnDelete:CASCADE;" json:"teacher_uuid"`
+	URL         string    `gorm:"type:text;not null" json:"url"`
+	Caption     string    `gorm:"size:200" json:"caption,omitempty"`
+	Order       int       `gorm:"default:0" json:"order"` // Display order 1-5
+	CreatedAt   time.Time `gorm:"autoCreateTime" json:"created_at"`
 }
 
 type TeacherProfile struct {
@@ -107,12 +109,12 @@ type TeacherProfile struct {
 	Bio string `gorm:"type:text" json:"bio"`
 
 	// Education & credentials
-	Education    string `gorm:"type:text" json:"education"`     // e.g. "S1 Pendidikan Musik, ISI Yogyakarta"
+	Education    string `gorm:"type:text" json:"education"`    // e.g. "S1 Pendidikan Musik, ISI Yogyakarta"
 	Certificates string `gorm:"type:text" json:"certificates"` // e.g. "Grade 8 ABRSM, Diploma Berklee Online"
 
 	// Professional experience
 	YearsOfExperience int    `gorm:"default:0" json:"years_of_experience"` // Tahun pengalaman mengajar
-	Experience        string `gorm:"type:text" json:"experience"`           // Narasi pengalaman, pertunjukan, dll
+	Experience        string `gorm:"type:text" json:"experience"`          // Narasi pengalaman, pertunjukan, dll
 
 	// Teaching style & specialty
 	TeachingStyle string `gorm:"type:text" json:"teaching_style"` // e.g. "Sabar, fun, berbasis teori"
@@ -122,7 +124,7 @@ type TeacherProfile struct {
 	Languages string `gorm:"size:200" json:"languages"` // e.g. "Bahasa Indonesia, English"
 
 	// Relationships
-	Instruments []Instrument  `gorm:"many2many:teacher_instruments;constraint:OnDelete:CASCADE;" json:"instruments"`
+	Instruments []Instrument   `gorm:"many2many:teacher_instruments;constraint:OnDelete:CASCADE;" json:"instruments"`
 	Album       []TeacherAlbum `gorm:"foreignKey:TeacherUUID;references:UserUUID" json:"album,omitempty"` // Max 5
 }
 
@@ -178,6 +180,7 @@ type Booking struct {
 	Notes            *string         `json:"notes,omitempty"`
 
 	IsReadyToFinish bool `gorm:"-" json:"is_ready_to_finish"`
+	IsManual        bool `gorm:"default:false" json:"is_manual"`
 }
 
 type ClassHistory struct {

@@ -5,6 +5,12 @@ import (
 	"strings"
 )
 
+type RebookRequest struct {
+	OriginalBookingID int    `json:"original_booking_id" binding:"required,gt=0"`
+	SubScheduleID     int    `json:"sub_schedule_id" binding:"required,gt=0"`
+	ClassDate         string `json:"class_date" binding:"required"` // "YYYY-MM-DD"
+}
+
 type ManagerUpdateStudentRequest struct {
 	Name     string  `json:"name" binding:"omitempty,min=3,max=50"`
 	Gender   string  `json:"gender" binding:"omitempty,oneof=male female"`

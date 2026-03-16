@@ -19,6 +19,121 @@ func NewManagerRepository(db *gorm.DB) domain.ManagerRepository {
 	return &managerRepo{db: db}
 }
 
+func (r *managerRepo) GetCancelledClassHistories(ctx context.Context) (*[]domain.ClassHistory, error) {
+	var histories []domain.ClassHistory
+
+	err := r.db.WithContext(ctx).
+		Preload("Booking").
+		Preload("Booking.Student").
+		Preload("Booking.Schedule").
+		Preload("Booking.Schedule.Teacher").
+		Preload("Booking.PackageUsed").
+		Preload("Booking.PackageUsed.Package.Instrument").
+		Joins("LEFT JOIN bookings ON class_histories.booking_id = bookings.id").
+		Where("class_histories.status = ?", domain.StatusCancelled).
+		Where("bookings.status = ?", domain.StatusCancelled).
+		Order("bookings.class_date DESC").
+		Find(&histories).Error
+
+	if err != nil {
+		return nil, fmt.Errorf("gagal mengambil riwayat kelas yang dibatalkan: %w", err)
+	}
+
+	return &histories, nil
+}
+
+func (r *managerRepo) RebookWithSubstitute(ctx context.Context, req domain.RebookInput) (*domain.Booking, error) {
+	tx := r.db.WithContext(ctx).Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 1. Load and validate original booking — must be cancelled, not already rebooked
+	var original domain.Booking
+	if err := tx.
+		Preload("PackageUsed").
+		Preload("PackageUsed.Package").
+		Where("id = ? AND status = ?", req.OriginalBookingID, domain.StatusCancelled).
+		First(&original).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("booking yang dibatalkan tidak ditemukan atau sudah diproses ulang")
+		}
+		return nil, fmt.Errorf("error mencari booking: %w", err)
+	}
+
+	// 2. Validate substitute schedule exists and belongs to a teacher
+	var subSchedule domain.TeacherSchedule
+	if err := tx.
+		Preload("Teacher").
+		Where("id = ? AND deleted_at IS NULL", req.SubScheduleID).
+		First(&subSchedule).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("jadwal guru pengganti tidak ditemukan")
+		}
+		return nil, fmt.Errorf("error mencari jadwal: %w", err)
+	}
+
+	// 3. Make sure the substitute is not the same teacher who cancelled
+	if subSchedule.TeacherUUID == original.Schedule.TeacherUUID {
+		tx.Rollback()
+		return nil, errors.New("guru pengganti tidak boleh sama dengan guru yang membatalkan")
+	}
+
+	// 4. Create new booking for the substitute
+	newBooking := domain.Booking{
+		StudentUUID:      original.StudentUUID,
+		ScheduleID:       req.SubScheduleID,
+		StudentPackageID: original.StudentPackageID,
+		ClassDate:        req.ClassDate,
+		Status:           domain.StatusBooked,
+		BookedAt:         time.Now(),
+		IsManual:         true, // ← this
+	}
+
+	if err := tx.Create(&newBooking).Error; err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("gagal membuat booking baru: %w", err)
+	}
+
+	//  5. Deduct quota back — it was refunded when the original teacher cancelled,
+	//     now the student is actually attending with a substitute so it gets consumed again
+	if err := tx.Model(&domain.StudentPackage{}).
+		Where("id = ?", original.StudentPackageID).
+		UpdateColumn("remaining_quota", gorm.Expr("remaining_quota - 1")).Error; err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("gagal mengurangi kuota paket: %w", err)
+	}
+
+	// 6. Guard against quota going negative (edge case: manager tampered quota manually)
+	var pkg domain.StudentPackage
+	if err := tx.Where("id = ?", original.StudentPackageID).First(&pkg).Error; err == nil {
+		if pkg.RemainingQuota < 0 {
+			tx.Rollback()
+			return nil, errors.New("kuota paket siswa tidak mencukupi untuk pemesanan ulang ini")
+		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		return nil, fmt.Errorf("gagal menyimpan: %w", err)
+	}
+
+	// Reload with full relations for notification
+	if err := r.db.WithContext(ctx).
+		Preload("Student").
+		Preload("Schedule").
+		Preload("Schedule.Teacher").
+		Preload("PackageUsed.Package.Instrument").
+		First(&newBooking, newBooking.ID).Error; err != nil {
+		return nil, fmt.Errorf("gagal memuat data booking: %w", err)
+	}
+
+	return &newBooking, nil
+}
+
 func (r *managerRepo) GetSetting(ctx context.Context) (*domain.Setting, error) {
 	var setting domain.Setting
 	err := r.db.WithContext(ctx).First(&setting).Error

@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type ManagerUseCase interface {
 	GetAllStudents(ctx context.Context) ([]User, error)
@@ -8,8 +11,9 @@ type ManagerUseCase interface {
 	ModifyStudentPackageQuota(ctx context.Context, studentUUID string, packageID int, incomingQuota int) error
 	UpdateManager(ctx context.Context, manager *User) error
 	UpdateStudent(ctx context.Context, student *User) error
+	GetCancelledClassHistories(ctx context.Context) (*[]ClassHistory, error)
+	RebookWithSubstitute(ctx context.Context, req RebookInput) (*Booking, error)
 
-	// Setting
 	GetSetting(ctx context.Context) (*Setting, error)
 	UpdateSetting(ctx context.Context, setting *Setting) error
 }
@@ -20,8 +24,15 @@ type ManagerRepository interface {
 	ModifyStudentPackageQuota(ctx context.Context, studentUUID string, packageID int, incomingQuota int) (*User, error)
 	UpdateManager(ctx context.Context, manager *User) error
 	UpdateStudent(ctx context.Context, student *User) error
+	GetCancelledClassHistories(ctx context.Context) (*[]ClassHistory, error)
+	RebookWithSubstitute(ctx context.Context, req RebookInput) (*Booking, error)
 
-	// Setting
 	GetSetting(ctx context.Context) (*Setting, error)
 	UpdateSetting(ctx context.Context, setting *Setting) error
+}
+
+type RebookInput struct {
+	OriginalBookingID int
+	SubScheduleID     int
+	ClassDate         time.Time // manager picks the actual date it happened
 }

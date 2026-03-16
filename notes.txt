@@ -1,0 +1,21 @@
+manager & admin kelola setting (sudah) + new endpoint
+teacher comission added (not applied to the feature yet, not tested) 
+manager alokasi use case siswa showed up even tho the class canceled lmao (not tested) + new endpoint
+spp fee removed
+New Teacher profile structured (not tested)
+
+
+new endpoint admin
+http://localhost:8080/admin/students/filter
+
+    value
+    const (
+        // StudentFilterAll returns all students (no filter)
+        StudentFilterAll StudentActivityFilter = "all"
+        // StudentFilterActive - has at least one active package (remaining_quota > 0 and end_date not expired)
+        StudentFilterActive StudentActivityFilter = "active"
+        // StudentFilterInactiveShort - no active package, last purchase was < 3 months ago (or never bought)
+        StudentFilterInactiveShort StudentActivityFilter = "inactive_short"
+        // StudentFilterInactiveLong - no active package AND no purchase in the last 3+ months
+        StudentFilterInactiveLong StudentActivityFilter = "inactive_long"
+    )

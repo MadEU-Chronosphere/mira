@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -31,7 +32,78 @@ func NewManagerHandler(app *gin.Engine, uc domain.ManagerUseCase, jwtManager *ut
 		manager.PUT("/modify/student/:uuid", h.UpdateStudent)
 		manager.GET("/settings", h.GetSetting)
 		manager.PUT("/settings", h.UpdateSetting)
+
+		manager.GET("/class-histories/cancelled", h.GetCancelledClassHistories)
+		manager.POST("/rebook", h.RebookWithSubstitute)
 	}
+}
+
+func (h *ManagerHandler) GetCancelledClassHistories(c *gin.Context) {
+	name := utils.GetAPIHitter(c)
+	histories, err := h.uc.GetCancelledClassHistories(c.Request.Context())
+	if err != nil {
+		utils.PrintLogInfo(&name, 500, "GetCancelledClassHistories - UseCase", &err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+			"message": "Gagal mengambil riwayat kelas yang dibatalkan",
+		})
+		return
+	}
+	utils.PrintLogInfo(&name, 200, "GetCancelledClassHistories", nil)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    histories,
+		"message": "Riwayat kelas yang dibatalkan berhasil diambil",
+	})
+}
+
+func (h *ManagerHandler) RebookWithSubstitute(c *gin.Context) {
+	name := utils.GetAPIHitter(c)
+	var req dto.RebookRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.PrintLogInfo(&name, 400, "RebookWithSubstitute - BindJSON", &err)
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   utils.TranslateValidationError(err),
+			"message": "Gagal membuat ulang pemesanan",
+		})
+		return
+	}
+
+	classDate, err := time.Parse("2006-01-02", req.ClassDate)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Format tanggal tidak valid, gunakan YYYY-MM-DD",
+			"message": "Gagal membuat ulang pemesanan",
+		})
+		return
+	}
+
+	input := domain.RebookInput{
+		OriginalBookingID: req.OriginalBookingID,
+		SubScheduleID:     req.SubScheduleID,
+		ClassDate:         classDate,
+	}
+
+	booking, err := h.uc.RebookWithSubstitute(c.Request.Context(), input)
+	if err != nil {
+		utils.PrintLogInfo(&name, 500, "RebookWithSubstitute - UseCase", &err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+			"message": "Gagal membuat ulang pemesanan",
+		})
+		return
+	}
+
+	utils.PrintLogInfo(&name, 201, "RebookWithSubstitute", nil)
+	c.JSON(http.StatusCreated, gin.H{
+		"success": true,
+		"data":    booking,
+		"message": "Kelas berhasil dialihkan ke guru pengganti",
+	})
 }
 
 func (h *ManagerHandler) GetSetting(c *gin.Context) {
@@ -69,7 +141,6 @@ func (h *ManagerHandler) UpdateSetting(c *gin.Context) {
 	utils.PrintLogInfo(&name, 200, "UpdateSetting", nil)
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "Pengaturan berhasil diperbarui"})
 }
-
 
 func (h *ManagerHandler) UpdateStudent(c *gin.Context) {
 	name := utils.GetAPIHitter(c)

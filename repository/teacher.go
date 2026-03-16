@@ -223,52 +223,53 @@ func (r *teacherRepository) FinishClass(ctx context.Context, bookingID int, teac
 	now := time.Now().In(loc)
 
 	// 4️⃣ Check if class can be finished
-	canFinish := now.Equal(classEnd) || now.After(classEnd)
+	if !booking.IsManual {
+		canFinish := now.Equal(classEnd) || now.After(classEnd)
+		if !canFinish {
+			tx.Rollback()
+			remaining := classEnd.Sub(now).Round(time.Minute)
 
-	if !canFinish {
-		tx.Rollback()
-		remaining := classEnd.Sub(now).Round(time.Minute)
+			// Format remaining time for human readability
+			remainingHours := int(remaining.Hours())
+			remainingMinutes := int(remaining.Minutes()) % 60
+			remainingSeconds := int(remaining.Seconds()) % 60
 
-		// Format remaining time for human readability
-		remainingHours := int(remaining.Hours())
-		remainingMinutes := int(remaining.Minutes()) % 60
-		remainingSeconds := int(remaining.Seconds()) % 60
+			var timeMsg string
 
-		var timeMsg string
-
-		if remainingHours > 0 {
-			if remainingMinutes > 0 {
-				timeMsg = fmt.Sprintf("%d jam %d menit", remainingHours, remainingMinutes)
+			if remainingHours > 0 {
+				if remainingMinutes > 0 {
+					timeMsg = fmt.Sprintf("%d jam %d menit", remainingHours, remainingMinutes)
+				} else {
+					timeMsg = fmt.Sprintf("%d jam", remainingHours)
+				}
+			} else if remainingMinutes > 0 {
+				if remainingSeconds > 0 {
+					timeMsg = fmt.Sprintf("%d menit %d detik", remainingMinutes, remainingSeconds)
+				} else {
+					timeMsg = fmt.Sprintf("%d menit", remainingMinutes)
+				}
 			} else {
-				timeMsg = fmt.Sprintf("%d jam", remainingHours)
+				timeMsg = fmt.Sprintf("%d detik", remainingSeconds)
 			}
-		} else if remainingMinutes > 0 {
-			if remainingSeconds > 0 {
-				timeMsg = fmt.Sprintf("%d menit %d detik", remainingMinutes, remainingSeconds)
-			} else {
-				timeMsg = fmt.Sprintf("%d menit", remainingMinutes)
-			}
-		} else {
-			timeMsg = fmt.Sprintf("%d detik", remainingSeconds)
+
+			// Format start and end times for better context
+			startFormatted := classStart.Format("15:04")
+			endFormatted := classEnd.Format("15:04")
+			dayOfWeek := classStart.Format("Monday")
+			classDate := classStart.Format("2006-01-02")
+
+			// translate day of week to Indonesian
+			dayOfWeek = utils.TranslateDayOfWeek(dayOfWeek)
+
+			return fmt.Errorf(
+				"Kelas belum dapat diselesaikan. Kelas berlangsung %s %s pukul %s - %s. Tunggu %s lagi hingga kelas berakhir",
+				dayOfWeek, classDate, startFormatted, endFormatted, timeMsg,
+			)
 		}
-
-		// Format start and end times for better context
-		startFormatted := classStart.Format("15:04")
-		endFormatted := classEnd.Format("15:04")
-		dayOfWeek := classStart.Format("Monday")
-		classDate := classStart.Format("2006-01-02")
-
-		// translate day of week to Indonesian
-		dayOfWeek = utils.TranslateDayOfWeek(dayOfWeek)
-
-		return fmt.Errorf(
-			"Kelas belum dapat diselesaikan. Kelas berlangsung %s %s pukul %s - %s. Tunggu %s lagi hingga kelas berakhir",
-			dayOfWeek, classDate, startFormatted, endFormatted, timeMsg,
-		)
 	}
 
 	// 5️⃣ Check if class hasn't started yet (edge case)
-	if now.Before(classStart) {
+	if !booking.IsManual && now.Before(classStart) {
 		tx.Rollback()
 		startFormatted := classStart.Format("15:04")
 		return fmt.Errorf("Kelas belum dimulai. Kelas akan dimulai pukul %s", startFormatted)
