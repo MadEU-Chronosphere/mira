@@ -2,10 +2,10 @@
 package middleware
 
 import (
+	"chronosphere/domain"
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -488,21 +488,34 @@ func tokenBucketRateLimit(key string, config RateLimitConfig) (bool, int, error)
 }
 
 // Main Rate Limiter Middleware
+// Main Rate Limiter Middleware
+// Admin and manager roles are fully exempt — they typically operate from
+// the same office network and low request limits would disrupt daily operations.
 func RateLimiter() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get rate limit rule for this endpoint
+		// ── Bypass for admin and manager roles ───────────────────────────────
+		// Role is set by AuthMiddleware before this runs on protected routes.
+		// On public routes role will be empty — that's fine, they still get limited.
+		if role, exists := c.Get("role"); exists {
+			r, _ := role.(string)
+			if r == domain.RoleAdmin || r == domain.RoleManagement {
+				c.Next()
+				return
+			}
+		}
+
+		// ── Get rate limit rule for this endpoint ─────────────────────────────
 		rule := getRateLimitRule(c.Request.URL.Path, c.Request.Method)
 
-		// Get identifier based on scope
+		// ── Get identifier based on scope ─────────────────────────────────────
 		identifier := getIdentifier(c, rule.Scope)
 		key := fmt.Sprintf("%s:%s:%s", rule.Scope, c.Request.Method, c.Request.URL.Path)
 		fullKey := fmt.Sprintf("%s:%s", key, identifier)
 
-		// Apply global safeguards first
+		// ── Global IP safeguard ───────────────────────────────────────────────
 		ipIdentifier := fmt.Sprintf("ip:%s", c.ClientIP())
 		globalIPKey := fmt.Sprintf("global:ip:%s", ipIdentifier)
 
-		// Check global IP limit
 		globalAllowed, _, err := slidingWindowRateLimit(globalIPKey, rateLimitRules["global_ip"])
 		if err != nil || !globalAllowed {
 			c.JSON(http.StatusTooManyRequests, gin.H{
@@ -513,7 +526,7 @@ func RateLimiter() gin.HandlerFunc {
 			return
 		}
 
-		// Check user-specific global limit if user is authenticated
+		// ── Global user safeguard (authenticated non-admin/manager users) ─────
 		if userID, exists := c.Get("userUUID"); exists {
 			userIdentifier := fmt.Sprintf("user:%v", userID)
 			globalUserKey := fmt.Sprintf("global:user:%s", userIdentifier)
@@ -529,7 +542,7 @@ func RateLimiter() gin.HandlerFunc {
 			}
 		}
 
-		// Apply specific endpoint rate limiting
+		// ── Endpoint-specific rate limiting ───────────────────────────────────
 		var allowed bool
 		var remaining int
 
@@ -549,42 +562,26 @@ func RateLimiter() gin.HandlerFunc {
 		}
 
 		if !allowed {
-			// Log the blocked request
 			logRateLimitBlock(c, rule, identifier)
 
-			// Return appropriate error response
 			c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", rule.MaxRequests))
 			c.Header("X-RateLimit-Remaining", "0")
-			c.Header("X-RateLimit-Reset", fmt.Sprintf("%d",
-				time.Now().Add(rule.Window).Unix()))
+			c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(rule.Window).Unix()))
 
-			if os.Getenv("APP_API_RETURN_LANG") == "IDN" {
-				c.JSON(http.StatusTooManyRequests, gin.H{
-					"error":       fmt.Sprintf("Permintaan terlalu sering, harap coba lagi dalam %v", rule.Window.String()),
-					"code":        "RATE_LIMIT_EXCEEDED",
-					"retry_after": int(rule.Window.Seconds()),
-					"limit":       rule.MaxRequests,
-					"window":      rule.Window.String(),
-				})
-			} else {
-				c.JSON(http.StatusTooManyRequests, gin.H{
-					"error":       fmt.Sprintf("Permintaan terlalu sering, harap coba lagi dalam %v", rule.Window.String()),
-					"code":        "RATE_LIMIT_EXCEEDED",
-					"retry_after": int(rule.Window.Seconds()),
-					"limit":       rule.MaxRequests,
-					"window":      rule.Window.String(),
-				})
-			}
-
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"error":       fmt.Sprintf("Permintaan terlalu sering, harap coba lagi dalam %v", rule.Window.String()),
+				"code":        "RATE_LIMIT_EXCEEDED",
+				"retry_after": int(rule.Window.Seconds()),
+				"limit":       rule.MaxRequests,
+				"window":      rule.Window.String(),
+			})
 			c.Abort()
 			return
 		}
 
-		// Add rate limit headers
 		c.Header("X-RateLimit-Limit", fmt.Sprintf("%d", rule.MaxRequests))
 		c.Header("X-RateLimit-Remaining", fmt.Sprintf("%d", remaining))
-		c.Header("X-RateLimit-Reset", fmt.Sprintf("%d",
-			time.Now().Add(rule.Window).Unix()))
+		c.Header("X-RateLimit-Reset", fmt.Sprintf("%d", time.Now().Add(rule.Window).Unix()))
 
 		c.Next()
 	}

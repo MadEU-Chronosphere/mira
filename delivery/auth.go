@@ -5,6 +5,7 @@ import (
 	"chronosphere/domain"
 	"chronosphere/middleware"
 	"chronosphere/utils"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -47,8 +48,9 @@ func NewAuthHandler(r *gin.Engine, authUC domain.AuthUseCase, db *gorm.DB) {
 
 	// Ping Route (no rate limiting)
 	r.GET("/ping", func(c *gin.Context) {
+		fmt.Println("pong2")
 		c.JSON(http.StatusOK, gin.H{
-			"message": "pong1",
+			"message": "pong2",
 		})
 	})
 

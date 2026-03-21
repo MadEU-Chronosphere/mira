@@ -69,6 +69,8 @@ func InitializeAppWithoutWhatsappNotification() (*gin.Engine, *gorm.DB) {
 	adminRepo := repository.NewAdminRepository(db)
 	otpRepo := repository.NewOTPRedisRepository(redisClient)
 	paymentRepo := repository.NewPaymentRepository(db)
+	teacherPaymentRepo := repository.NewTeacherPaymentRepository(db)
+	reportRepo := repository.NewReportRepository(db)
 
 	// Init services
 	studentService := service.NewStudentUseCase(studentRepo, nil)
@@ -77,6 +79,8 @@ func InitializeAppWithoutWhatsappNotification() (*gin.Engine, *gorm.DB) {
 	teacherService := service.NewTeacherService(teacherRepo, nil)
 	authService := service.NewAuthService(authRepo, otpRepo, jwtSecret)
 	paymentService := service.NewPaymentService(paymentRepo, adminRepo, db, nil)
+	teacherPaymentService := service.NewTeacherPaymentService(teacherPaymentRepo, adminRepo)
+	reportService := service.NewReportService(reportRepo)
 
 	// RATE LIMITER
 	middleware.InitRateLimiter(redisClient)
@@ -94,6 +98,8 @@ func InitializeAppWithoutWhatsappNotification() (*gin.Engine, *gorm.DB) {
 	delivery.NewAdminHandler(app, adminService, authService.GetAccessTokenManager())
 	delivery.NewTeacherHandler(app, teacherService, authService.GetAccessTokenManager(), db)
 	delivery.NewPaymentHandler(app, paymentService, authService.GetAccessTokenManager())
+	delivery.NewTeacherPaymentHandler(app, teacherPaymentService, authService.GetAccessTokenManager())
+	delivery.NewReportHandler(app, reportService, authService.GetAccessTokenManager())
 
 	return app, db
 }
@@ -153,6 +159,8 @@ func InitializeAppWithoutRateLimiter() (*gin.Engine, *gorm.DB) {
 	adminRepo := repository.NewAdminRepository(db)
 	otpRepo := repository.NewOTPRedisRepository(redisClient)
 	paymentRepo := repository.NewPaymentRepository(db)
+	teacherPaymentRepo := repository.NewTeacherPaymentRepository(db)
+	reportRepo := repository.NewReportRepository(db)
 
 	// Init services
 	studentService := service.NewStudentUseCase(studentRepo, WhatsappClient)
@@ -161,6 +169,8 @@ func InitializeAppWithoutRateLimiter() (*gin.Engine, *gorm.DB) {
 	teacherService := service.NewTeacherService(teacherRepo, WhatsappClient)
 	authService := service.NewAuthService(authRepo, otpRepo, jwtSecret)
 	paymentService := service.NewPaymentService(paymentRepo, adminRepo, db, WhatsappClient)
+	teacherPaymentService := service.NewTeacherPaymentService(teacherPaymentRepo, adminRepo)
+	reportService := service.NewReportService(reportRepo)
 
 	// RATE LIMITER
 	// middleware.InitRateLimiter(redisClient)
@@ -178,6 +188,8 @@ func InitializeAppWithoutRateLimiter() (*gin.Engine, *gorm.DB) {
 	delivery.NewAdminHandler(app, adminService, authService.GetAccessTokenManager())
 	delivery.NewTeacherHandler(app, teacherService, authService.GetAccessTokenManager(), db)
 	delivery.NewPaymentHandler(app, paymentService, authService.GetAccessTokenManager())
+	delivery.NewTeacherPaymentHandler(app, teacherPaymentService, authService.GetAccessTokenManager())
+	delivery.NewReportHandler(app, reportService, authService.GetAccessTokenManager())
 
 	return app, db
 }
@@ -234,6 +246,8 @@ func InitializeFullApp() (*gin.Engine, *gorm.DB) {
 	adminRepo := repository.NewAdminRepository(db)
 	otpRepo := repository.NewOTPRedisRepository(redisClient)
 	paymentRepo := repository.NewPaymentRepository(db)
+	teacherPaymentRepo := repository.NewTeacherPaymentRepository(db)
+	reportRepo := repository.NewReportRepository(db)
 
 	// Init services
 	studentService := service.NewStudentUseCase(studentRepo, WhatsappClient)
@@ -242,6 +256,8 @@ func InitializeFullApp() (*gin.Engine, *gorm.DB) {
 	teacherService := service.NewTeacherService(teacherRepo, WhatsappClient)
 	authService := service.NewAuthService(authRepo, otpRepo, jwtSecret)
 	paymentService := service.NewPaymentService(paymentRepo, adminRepo, db, WhatsappClient)
+	teacherPaymentService := service.NewTeacherPaymentService(teacherPaymentRepo, adminRepo)
+	reportService := service.NewReportService(reportRepo)
 
 	// RATE LIMITER
 	middleware.InitRateLimiter(redisClient)
@@ -259,6 +275,8 @@ func InitializeFullApp() (*gin.Engine, *gorm.DB) {
 	delivery.NewAdminHandler(app, adminService, authService.GetAccessTokenManager())
 	delivery.NewTeacherHandler(app, teacherService, authService.GetAccessTokenManager(), db)
 	delivery.NewPaymentHandler(app, paymentService, authService.GetAccessTokenManager())
+	delivery.NewTeacherPaymentHandler(app, teacherPaymentService, authService.GetAccessTokenManager())
+	delivery.NewReportHandler(app, reportService, authService.GetAccessTokenManager())
 
 	return app, db
 }

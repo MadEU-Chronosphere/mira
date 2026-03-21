@@ -19,3 +19,8 @@ http://localhost:8080/admin/students/filter
         // StudentFilterInactiveLong - no active package AND no purchase in the last 3+ months
         StudentFilterInactiveLong StudentActivityFilter = "inactive_long"
     )
+
+
+for admin and manager remove the rate limit (posibilitas mereka masih 1 ip address karena di kantor wkwkwk kntl)
+
+removed rate limiter on admin and manager, admin takes on teacher salary, student (getclass and booking logic re logic),  package type  (trial and not),  

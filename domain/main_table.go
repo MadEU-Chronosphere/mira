@@ -56,21 +56,21 @@ type StudentProfile struct {
 }
 
 type Package struct {
-	ID              int        `gorm:"primaryKey" json:"id"`
-	Name            string     `gorm:"not null" json:"name"`
-	Price           float64    `gorm:"not null" json:"price"`
-	PromoPrice      float64    `gorm:"default:0" json:"promo_price"`
-	IsPromoActive   bool       `gorm:"default:false" json:"is_promo_active"`
-	IsTrial         bool       `gorm:"default:false" json:"is_trial"` // Paket percobaan/trial
-	Quota           int        `gorm:"not null" json:"quota"`
-	Duration        int        `gorm:"not null;default:30" json:"duration"` // Minutes: 30 or 60
-	ExpiredDuration int        `json:"expired_duration"`
-	Description     string     `json:"description"`
-	InstrumentID    int        `gorm:"not null" json:"instrument_id"`
-	Instrument      Instrument `gorm:"foreignKey:InstrumentID" json:"instrument"`
-	CreatedAt       time.Time  `gorm:"autoCreateTime" json:"created_at"`
-	UpdatedAt       time.Time  `gorm:"autoUpdateTime" json:"updated_at"`
-	DeletedAt       *time.Time `gorm:"index" json:"deleted_at,omitempty"`
+	ID              int         `gorm:"primaryKey" json:"id"`
+	Name            string      `gorm:"not null" json:"name"`
+	Price           float64     `gorm:"not null" json:"price"`
+	PromoPrice      float64     `gorm:"default:0" json:"promo_price"`
+	IsPromoActive   bool        `gorm:"default:false" json:"is_promo_active"`
+	IsTrial         bool        `gorm:"default:false" json:"is_trial"` // Paket percobaan/trial
+	Quota           int         `gorm:"not null" json:"quota"`
+	Duration        int         `gorm:"not null;default:30" json:"duration"` // Minutes: 30 or 60
+	ExpiredDuration int         `json:"expired_duration"`
+	Description     string      `json:"description"`
+	InstrumentID    *int        `gorm:"default:null" json:"instrument_id"`
+	Instrument      *Instrument `gorm:"foreignKey:InstrumentID" json:"instrument,omitempty"`
+	CreatedAt       time.Time   `gorm:"autoCreateTime" json:"created_at"`
+	UpdatedAt       time.Time   `gorm:"autoUpdateTime" json:"updated_at"`
+	DeletedAt       *time.Time  `gorm:"index" json:"deleted_at,omitempty"`
 }
 
 type Setting struct {
@@ -86,6 +86,7 @@ type StudentPackage struct {
 	StudentUUID    string    `gorm:"type:uuid;not null;constraint:OnDelete:CASCADE,OnUpdate:CASCADE;" json:"student_uuid"`
 	PackageID      int       `gorm:"not null;constraint:OnDelete:CASCADE,OnUpdate:CASCADE;" json:"package_id"`
 	RemainingQuota int       `gorm:"not null" json:"remaining_quota"`
+	PricePaid      float64   `gorm:"not null;default:0" json:"price_paid"` // snapshot at purchase time
 	StartDate      time.Time `json:"start_date"`
 	EndDate        time.Time `json:"end_date"`
 
@@ -170,6 +171,7 @@ type Booking struct {
 	StudentPackageID int             `gorm:"not null" json:"student_package_id"`              // ✅ Added this field
 	PackageUsed      StudentPackage  `gorm:"foreignKey:StudentPackageID" json:"package_used"` // ✅ Added relationship
 	ClassDate        time.Time       `gorm:"not null" json:"class_date"`                      // ✅ Add this field
+	InstrumentID     int             `gorm:"not null;default:0" json:"instrument_id"`         // ← NEW
 	Status           string          `gorm:"size:20;default:'booked'" json:"status"`
 	BookedAt         time.Time       `gorm:"autoCreateTime" json:"booked_at"`
 	CompletedAt      *time.Time      `json:"completed_at,omitempty"`

@@ -220,7 +220,7 @@ func (h *AdminHandler) CreatePackage(c *gin.Context) {
 		Quota:           req.Quota,
 		Duration:        req.Duration,
 		Description:     req.Description,
-		InstrumentID:    req.InstrumentID,
+		InstrumentID:    &req.InstrumentID,
 		ExpiredDuration: req.ExpiredDuration,
 	}
 
@@ -270,7 +270,7 @@ func (h *AdminHandler) UpdatePackage(c *gin.Context) {
 		pkg.ExpiredDuration = req.ExpiredDuration
 	}
 	pkg.Duration = req.Duration
-	pkg.InstrumentID = req.InstrumentID
+	pkg.InstrumentID = &req.InstrumentID
 	pkg.Description = req.Description
 	pkg.Price = req.Price
 	pkg.PromoPrice = req.PromoPrice
@@ -728,7 +728,8 @@ func (h *AdminHandler) ClearUserDeletedAt(c *gin.Context) {
 
 // SETTINGS =====================================================================================================
 type UpdateSettingRequest struct {
-	RegistrationFee float64 `json:"registration_fee" binding:"required,min=0"`
+	RegistrationFee   float64 `json:"registration_fee" binding:"required,min=0"`
+	TeacherCommission float64 `json:"teacher_commission" binding:"required,min=0"`
 }
 
 func (h *AdminHandler) GetSetting(c *gin.Context) {

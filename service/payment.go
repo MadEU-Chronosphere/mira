@@ -161,6 +161,7 @@ func (s *paymentService) CreateInvoice(ctx context.Context, studentUUID string, 
 }
 
 func (s *paymentService) HandleWebhook(ctx context.Context, payload domain.XenditWebhookPayload) error {
+	fmt.Println("webhoook called")
 	// 1. Find payment by external_id
 	payment, err := s.paymentRepo.GetPaymentByExternalID(ctx, payload.ExternalID)
 	if err != nil {
@@ -203,6 +204,7 @@ func (s *paymentService) HandleWebhook(ctx context.Context, payload domain.Xendi
 				return err
 			}
 
+			fmt.Println("run auto assign")
 			// Auto-assign package to student
 			if err := s.autoAssignPackage(ctx, payment.StudentUUID, payment.PackageID); err != nil {
 				log.Printf("⚠️  Webhook: auto-assign failed, admin can assign manually: %v", err)

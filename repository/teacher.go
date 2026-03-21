@@ -19,6 +19,8 @@ func NewTeacherRepository(db *gorm.DB) domain.TeacherRepository {
 	return &teacherRepository{db: db}
 }
 
+
+
 func (r *teacherRepository) DeleteAvailabilityBasedOnDay(ctx context.Context, teacherUUID string, dayOfWeek string) error {
 	// Check if there are any booked classes on this day
 	var bookedCount int64
@@ -562,7 +564,7 @@ func (r *teacherRepository) GetAllBookedClass(ctx context.Context, teacherUUID s
 		// Get instrument ID from the booked package
 		var instrumentID int
 		if bookings[i].PackageUsed.Package != nil {
-			instrumentID = bookings[i].PackageUsed.Package.InstrumentID
+			instrumentID = *bookings[i].PackageUsed.Package.InstrumentID
 		}
 
 		// Fetch completed class histories for this student, filtered by instrument
@@ -667,11 +669,14 @@ func (r *teacherRepository) CancelBookedClass(
 	}
 
 	// 🔁 Refund quota to the exact package used in this booking
-	if err := tx.Model(&domain.StudentPackage{}).
-		Where("id = ?", booking.StudentPackageID).
-		Update("remaining_quota", gorm.Expr("remaining_quota + 1")).Error; err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("gagal refund quota: %w", err)
+	// skip if the booking is using a trial package
+	if !booking.PackageUsed.Package.IsTrial {
+		if err := tx.Model(&domain.StudentPackage{}).
+			Where("id = ?", booking.StudentPackageID).
+			Update("remaining_quota", gorm.Expr("remaining_quota + 1")).Error; err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("gagal refund quota: %w", err)
+		}
 	}
 
 	// 🔁 Update schedule availability

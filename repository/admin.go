@@ -363,28 +363,31 @@ func (r *adminRepo) AssignPackageToStudent(ctx context.Context, studentUUID stri
 			tx.Rollback()
 		}
 	}()
-
-	// 1️⃣ Check student existence
+ 
+	// 1. Check student existence
 	var student domain.User
-	if err := tx.Where("uuid = ? AND role = ? AND deleted_at IS NULL", studentUUID, domain.RoleStudent).First(&student).Error; err != nil {
+	if err := tx.Where("uuid = ? AND role = ? AND deleted_at IS NULL", studentUUID, domain.RoleStudent).
+		First(&student).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil, errors.New("siswa tidak ditemukan")
 		}
 		return nil, nil, errors.New(utils.TranslateDBError(err))
 	}
-
-	// 2️⃣ Check package existence
+ 
+	// 2. Check package existence
 	var pkg domain.Package
-	if err := tx.Preload("Instrument").Where("id = ? AND deleted_at IS NULL", packageID).First(&pkg).Error; err != nil {
+	if err := tx.Preload("Instrument").
+		Where("id = ? AND deleted_at IS NULL", packageID).
+		First(&pkg).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil, errors.New("paket tidak ditemukan")
 		}
 		return nil, nil, errors.New(utils.TranslateDBError(err))
 	}
-
-	// 3️⃣ Ensure student profile exists
+ 
+	// 3. Ensure student profile exists
 	var studentProfile domain.StudentProfile
 	if err := tx.Where("user_uuid = ?", studentUUID).First(&studentProfile).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -398,24 +401,40 @@ func (r *adminRepo) AssignPackageToStudent(ctx context.Context, studentUUID stri
 			return nil, nil, errors.New(utils.TranslateDBError(err))
 		}
 	}
-
-	// 5️⃣ Assign new package
+ 
+	// 4. Snapshot the effective price at purchase time.
+	//    Use promo price when promo is active and promo price is set,
+	//    otherwise fall back to the base price.
+	//    This value is stored permanently on the StudentPackage row so that
+	//    teacher commission calculations remain accurate even if the package
+	//    price or promo status changes later.
+	pricePaid := pkg.Price
+	if pkg.IsPromoActive && pkg.PromoPrice > 0 {
+		pricePaid = pkg.PromoPrice
+	}
+ 
+	// 5. Assign new package with snapshotted price
 	newSub := domain.StudentPackage{
 		StudentUUID:    studentUUID,
 		PackageID:      packageID,
 		RemainingQuota: pkg.Quota,
+		PricePaid:      pricePaid,
 		StartDate:      time.Now(),
 		EndDate:        time.Now().AddDate(0, 0, pkg.ExpiredDuration),
 	}
-
+ 
 	if err := tx.Create(&newSub).Error; err != nil {
 		tx.Rollback()
 		return nil, nil, errors.New(utils.TranslateDBError(err))
 	}
-
-	tx.Commit()
+ 
+	if err := tx.Commit().Error; err != nil {
+		return nil, nil, errors.New(utils.TranslateDBError(err))
+	}
+ 
 	return &student, &pkg, nil
 }
+ 
 
 // CreatePackage inserts a new package
 func (r *adminRepo) CreatePackage(ctx context.Context, pkg *domain.Package) (*domain.Package, error) {
@@ -442,7 +461,7 @@ func (r *adminRepo) CreatePackage(ctx context.Context, pkg *domain.Package) (*do
 		return nil, errors.New(utils.TranslateDBError(err))
 	}
 
-	pkg.Instrument.ID = pkg.InstrumentID
+	pkg.Instrument.ID = *pkg.InstrumentID
 	return pkg, nil
 }
 
@@ -577,8 +596,6 @@ func (r *adminRepo) GetFilteredStudents(ctx context.Context, filter domain.Stude
 		return students, err
 	}
 }
-
-
 
 // GetStudentByUUID fetches a student by UUID
 func (r *adminRepo) GetStudentByUUID(ctx context.Context, uuid string) (*domain.User, error) {
