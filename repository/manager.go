@@ -19,6 +19,28 @@ func NewManagerRepository(db *gorm.DB) domain.ManagerRepository {
 	return &managerRepo{db: db}
 }
 
+func (r *managerRepo) GetTeacherSchedules(ctx context.Context, teacherUUID string) ([]domain.TeacherSchedule, error) {
+    var schedules []domain.TeacherSchedule
+    if err := r.db.WithContext(ctx).
+        Where("teacher_uuid = ? AND deleted_at IS NULL", teacherUUID).
+        Order("day_of_week, start_time").
+        Find(&schedules).Error; err != nil {
+        return nil, err
+    }
+    return schedules, nil
+}
+
+func (r *managerRepo) GetAllTeachers(ctx context.Context) ([]domain.User, error) {
+    var teachers []domain.User
+    if err := r.db.WithContext(ctx).
+        Where("role = ? AND deleted_at IS NULL", domain.RoleTeacher).
+        Preload("TeacherProfile.Instruments").
+        Find(&teachers).Error; err != nil {
+        return nil, err
+    }
+    return teachers, nil
+}
+
 func (r *managerRepo) GetCancelledClassHistories(ctx context.Context) (*[]domain.ClassHistory, error) {
 	var histories []domain.ClassHistory
 

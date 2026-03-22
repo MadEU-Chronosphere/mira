@@ -22,6 +22,17 @@ func NewManagerService(managerRepo domain.ManagerRepository, meow *whatsmeow.Cli
 	}
 }
 
+func (s *managerService) GetTeacherSchedules(ctx context.Context, teacherUUID string) ([]domain.TeacherSchedule, error) {
+    if teacherUUID == "" {
+        return nil, errors.New("UUID guru tidak boleh kosong")
+    }
+    return s.managerRepo.GetTeacherSchedules(ctx, teacherUUID)
+}
+
+func (s *managerService) GetAllTeachers(ctx context.Context) ([]domain.User, error) {
+	return s.managerRepo.GetAllTeachers(ctx)
+}
+
 type managerService struct {
 	managerRepo domain.ManagerRepository
 	messenger   *whatsmeow.Client

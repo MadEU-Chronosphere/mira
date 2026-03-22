@@ -25,6 +25,8 @@ func NewManagerHandler(app *gin.Engine, uc domain.ManagerUseCase, jwtManager *ut
 	manager := app.Group("/manager")
 	manager.Use(config.AuthMiddleware(jwtManager), middleware.ManagerOnly(), middleware.ValidateTurnedOffUserMiddleware(db))
 	{
+		manager.GET("/teachers/:uuid/schedules", h.GetTeacherSchedules)
+		manager.GET("/teachers", h.GetAllTeachers)
 		manager.GET("/students", h.GetAllStudents)
 		manager.GET("/students/:uuid", h.GetStudentByUUID)
 		manager.PUT("/students/:uuid/packages/:package_id/quota", h.ModifyStudentPackageQuota)
@@ -32,10 +34,55 @@ func NewManagerHandler(app *gin.Engine, uc domain.ManagerUseCase, jwtManager *ut
 		manager.PUT("/modify/student/:uuid", h.UpdateStudent)
 		manager.GET("/settings", h.GetSetting)
 		manager.PUT("/settings", h.UpdateSetting)
-		
+
 		manager.GET("/class-histories/cancelled", h.GetCancelledClassHistories)
 		manager.POST("/rebook", h.RebookWithSubstitute)
 	}
+}
+
+func (h *ManagerHandler) GetTeacherSchedules(c *gin.Context) {
+	name := utils.GetAPIHitter(c)
+	teacherUUID := c.Param("uuid")
+
+	schedules, err := h.uc.GetTeacherSchedules(c.Request.Context(), teacherUUID)
+	if err != nil {
+		utils.PrintLogInfo(&name, 500, "GetTeacherSchedules - UseCase", &err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+			"message": "Gagal mengambil jadwal guru",
+		})
+		return
+	}
+
+	utils.PrintLogInfo(&name, 200, "GetTeacherSchedules", nil)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    schedules,
+		"total":   len(schedules),
+		"message": "Jadwal guru berhasil diambil",
+	})
+}
+
+func (h *ManagerHandler) GetAllTeachers(c *gin.Context) {
+	name := utils.GetAPIHitter(c)
+	teachers, err := h.uc.GetAllTeachers(c.Request.Context())
+	if err != nil {
+		utils.PrintLogInfo(&name, 500, "GetAllTeachers - UseCase", &err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   err.Error(),
+			"message": "Gagal mengambil data guru",
+		})
+		return
+	}
+	utils.PrintLogInfo(&name, 200, "GetAllTeachers", nil)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    teachers,
+		"total":   len(teachers),
+		"message": "Data guru berhasil diambil",
+	})
 }
 
 func (h *ManagerHandler) GetCancelledClassHistories(c *gin.Context) {
