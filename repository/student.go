@@ -507,7 +507,6 @@ func (r *studentRepository) GetAvailableSchedules(
 ) (*[]domain.ScheduleAvailabilityResult, error) {
 
 	// ── 1. Fetch candidate schedules ─────────────────────────────────────────
-	// Only teachers who explicitly teach instrumentID are included.
 	var schedules []domain.TeacherSchedule
 	if err := r.db.WithContext(ctx).
 		Distinct("teacher_schedules.*").
@@ -524,98 +523,83 @@ func (r *studentRepository) GetAvailableSchedules(
 		Find(&schedules).Error; err != nil {
 		return nil, fmt.Errorf("gagal mengambil jadwal: %w", err)
 	}
- 
-	// ── 2. Load the student's active packages for this instrument ─────────────
-	// We need to know every distinct duration the student currently has quota
-	// for, so we can flag schedules whose duration doesn't match any of them.
-	//
-	// "Active" = remaining_quota > 0 AND end_date hasn't expired AND NOT trial.
-	// Trial packages are instrument-agnostic; they are handled separately in
-	// BookClass and are NOT used for the duration-compatibility flag here.
-	type pkgSummary struct {
+
+	// ── 2. Load student's active packages for this instrument ─────────────────
+	// BUG FIX: instrument_id on packages is nullable (*int in Go / integer in DB).
+	// Using a raw struct scan with explicit column aliases avoids any GORM
+	// nullability mis-handling. We also cast instrument_id explicitly in SQL
+	// so the comparison is always integer = integer.
+	type pkgRow struct {
 		Duration int
 		ID       int
 	}
-	var activePkgs []pkgSummary
-	if err := r.db.WithContext(ctx).
-		Table("student_packages sp").
-		Select("p.duration AS duration, sp.id AS id").
-		Joins("JOIN packages p ON p.id = sp.package_id").
-		Where("sp.student_uuid = ?", studentUUID).
-		Where("p.instrument_id = ?", instrumentID).
-		Where("p.is_trial = false").
-		Where("sp.remaining_quota > 0").
-		Where("sp.end_date >= ?", time.Now()).
-		Scan(&activePkgs).Error; err != nil {
+	var activePkgs []pkgRow
+	err := r.db.WithContext(ctx).Raw(`
+		SELECT p.duration AS duration, sp.id AS id
+		FROM student_packages sp
+		JOIN packages p ON p.id = sp.package_id
+		WHERE sp.student_uuid = ?
+		  AND p.instrument_id = ?
+		  AND p.is_trial = false
+		  AND sp.remaining_quota > 0
+		  AND sp.end_date >= NOW()
+	`, studentUUID, instrumentID).Scan(&activePkgs).Error
+	if err != nil {
 		return nil, fmt.Errorf("gagal memuat paket siswa: %w", err)
 	}
- 
-	// Build a set of compatible durations for O(1) lookup.
-	compatibleDurations := make(map[int]bool, 2) // at most 30 and 60
+
+	compatibleDurations := make(map[int]bool, 2)
 	for _, p := range activePkgs {
 		compatibleDurations[p.Duration] = true
 	}
-	// compatibleDurations will be empty when the student has no active
-	// non-trial package for this instrument — all schedules get
-	// IsDurationCompatible = false.
- 
-	// ── 3. Determine instrument category for room-capacity checks ────────────
-	// Fetch the instrument name once; drum vs non-drum drives room limits.
+
+	// ── 3. Instrument category for room-capacity checks ──────────────────────
 	var instrument domain.Instrument
 	if err := r.db.WithContext(ctx).
 		Where("id = ? AND deleted_at IS NULL", instrumentID).
 		First(&instrument).Error; err != nil {
 		return nil, fmt.Errorf("instrumen tidak ditemukan: %w", err)
 	}
- 
+
 	isDrum := strings.EqualFold(instrument.Name, "drum") ||
 		strings.EqualFold(instrument.Name, "drums")
- 
+
 	roomLimit := domain.RegularRoomLimit
 	if isDrum {
 		roomLimit = domain.DrumRoomLimit
 	}
- 
-	// ── 4. Pre-fetch teacher finished-class counts (single query, no N+1) ────
+
+	// ── 4. Teacher finished-class counts (single aggregation query) ──────────
 	teacherFinishedCounts, err := r.fetchTeacherFinishedClassCounts(ctx)
 	if err != nil {
 		teacherFinishedCounts = make(map[string]int)
 	}
- 
+
 	// ── 5. Enrich each schedule ───────────────────────────────────────────────
 	var results []domain.ScheduleAvailabilityResult
- 
+
 	for i := range schedules {
 		sch := &schedules[i]
- 
+
 		result := domain.ScheduleAvailabilityResult{
 			TeacherSchedule:           *sch,
 			TeacherFinishedClassCount: teacherFinishedCounts[sch.TeacherUUID],
 		}
- 
-		// ── 5a. Next class date ───────────────────────────────────────────────
+
+		// 5a. Next class date
 		startTimeParsed, _ := time.Parse("15:04", sch.StartTime)
 		next := utils.GetNextClassDate(sch.DayOfWeek, startTimeParsed)
 		result.NextClassDate = &next
- 
-		// ── 5b. IsDurationCompatible ─────────────────────────────────────────
-		// True when the student owns an active package whose duration matches
-		// this schedule's duration (e.g., 30-min schedule requires a 30-min
-		// package). If the student holds both 30 and 60 minute packages for
-		// this instrument, every schedule is compatible.
-		isDurationCompatible := compatibleDurations[sch.Duration]
-		result.IsDurationCompatible = ptrBool(isDurationCompatible)
- 
-		// ── 5c. IsRoomAvailable ──────────────────────────────────────────────
-		// Count active bookings on nextClassDate at the same start time for the
-		// same instrument category (drum vs non-drum room).
+
+		// 5b. IsDurationCompatible
+		result.IsDurationCompatible = ptrBool(compatibleDurations[sch.Duration])
+
+		// 5c. IsRoomAvailable
 		var bookingCount int64
 		roomCountErr := r.countRoomUsage(
 			r.db.WithContext(ctx),
-			next,
-			sch.StartTime,
-			instrumentID,
-			isDrum,
+			next, sch.StartTime,
+			instrumentID, isDrum,
 			&bookingCount,
 		)
 		if roomCountErr != nil {
@@ -623,12 +607,9 @@ func (r *studentRepository) GetAvailableSchedules(
 		} else {
 			result.IsRoomAvailable = ptrBool(bookingCount < roomLimit)
 		}
- 
-		// ── 5d. IsBookedSameDayAndTime ───────────────────────────────────────
-		// True when this student already has an active booking (any instrument)
-		// on the same date AND same start time. We don't restrict by instrument
-		// here — a student can't attend two classes simultaneously regardless.
-		var existingBookingCount int64
+
+		// 5d. IsBookedSameDayAndTime
+		var existingCount int64
 		if err := r.db.WithContext(ctx).
 			Model(&domain.Booking{}).
 			Joins("JOIN teacher_schedules ts ON ts.id = bookings.schedule_id").
@@ -636,23 +617,25 @@ func (r *studentRepository) GetAvailableSchedules(
 			Where("bookings.status IN ?", []string{domain.StatusBooked, domain.StatusRescheduled}).
 			Where("bookings.class_date = ?", next).
 			Where("ts.start_time = ?", sch.StartTime).
-			Count(&existingBookingCount).Error; err == nil {
-			result.IsBookedSameDayAndTime = ptrBool(existingBookingCount > 0)
+			Count(&existingCount).Error; err == nil {
+			result.IsBookedSameDayAndTime = ptrBool(existingCount > 0)
 		} else {
 			result.IsBookedSameDayAndTime = ptrBool(false)
 		}
- 
-		// ── 5e. IsFullyAvailable (composite) ─────────────────────────────────
-		isFullyAvailable := *result.IsRoomAvailable &&
-			*result.IsDurationCompatible &&
-			!*result.IsBookedSameDayAndTime
-		result.IsFullyAvailable = ptrBool(isFullyAvailable)
- 
+
+		// 5e. IsFullyAvailable
+		result.IsFullyAvailable = ptrBool(
+			*result.IsRoomAvailable &&
+				*result.IsDurationCompatible &&
+				!*result.IsBookedSameDayAndTime,
+		)
+
 		results = append(results, result)
 	}
- 
+
 	return &results, nil
 }
+
 // fetchTeacherFinishedClassCounts returns a map of teacherUUID → number of completed classes.
 // A single aggregation query avoids N+1 problems.
 func (r *studentRepository) fetchTeacherFinishedClassCounts(ctx context.Context) (map[string]int, error) {
