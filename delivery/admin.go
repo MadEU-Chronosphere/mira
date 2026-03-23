@@ -134,7 +134,7 @@ type CreatePackageRequest struct {
 	IsTrial         bool    `json:"is_trial,omitempty"`
 	Quota           int     `json:"quota" binding:"required,gt=0"`
 	Description     string  `json:"description,omitempty"`
-	InstrumentID    int     `json:"instrument_id" binding:"required,gt=0"`
+	InstrumentID    *int    `json:"instrument_id" binding:"required,gt=0"`
 }
 type UpdatePackageRequest struct {
 	Name            string  `json:"name,omitempty" binding:"omitempty,min=3,max=50"`
@@ -142,7 +142,7 @@ type UpdatePackageRequest struct {
 	ExpiredDuration int     `json:"expired_duration"`
 	Quota           int     `json:"quota,omitempty" binding:"omitempty,gt=0"`
 	Description     string  `json:"description,omitempty"`
-	InstrumentID    int     `json:"instrument_id,omitempty" binding:"required,gt=0"`
+	InstrumentID    *int    `json:"instrument_id,omitempty" binding:"required,gt=0"`
 	Price           float64 `json:"price,omitempty" binding:"omitempty,gt=0"`
 	PromoPrice      float64 `json:"promo_price,omitempty"`
 	IsPromoActive   bool    `json:"is_promo_active,omitempty"`
@@ -215,6 +215,7 @@ func (h *AdminHandler) CreatePackage(c *gin.Context) {
 
 	if req.IsTrial {
 		req.Duration = 0
+		req.InstrumentID = nil
 	}
 
 	pkg := &domain.Package{
@@ -226,7 +227,7 @@ func (h *AdminHandler) CreatePackage(c *gin.Context) {
 		Quota:           req.Quota,
 		Duration:        req.Duration,
 		Description:     req.Description,
-		InstrumentID:    &req.InstrumentID,
+		InstrumentID:    req.InstrumentID,
 		ExpiredDuration: req.ExpiredDuration,
 	}
 
@@ -274,13 +275,15 @@ func (h *AdminHandler) UpdatePackage(c *gin.Context) {
 
 	if req.IsTrial {
 		req.Duration = 0
+		req.InstrumentID = nil
 	}
 
 	if req.ExpiredDuration != 0 {
 		pkg.ExpiredDuration = req.ExpiredDuration
 	}
+	
 	pkg.Duration = req.Duration
-	pkg.InstrumentID = &req.InstrumentID
+	pkg.InstrumentID = req.InstrumentID
 	pkg.Description = req.Description
 	pkg.Price = req.Price
 	pkg.PromoPrice = req.PromoPrice
