@@ -55,13 +55,31 @@ func (s *paymentService) CreateInvoice(ctx context.Context, studentUUID string, 
 		return nil, fmt.Errorf("paket tidak ditemukan: %w", err)
 	}
 
-	// 3. Get settings for fees
+	// ── 3. Guard: trial package is a one-time purchase ────────────────────────
+	if pkg.IsTrial {
+		var trialCount int64
+		err = s.db.WithContext(ctx).
+			Table("payments").
+			Joins("JOIN packages ON packages.id = payments.package_id").
+			Where("payments.student_uuid = ?", studentUUID).
+			Where("payments.status = ?", domain.PaymentStatusPaid).
+			Where("packages.is_trial = true").
+			Count(&trialCount).Error
+		if err != nil {
+			return nil, fmt.Errorf("gagal memeriksa riwayat paket trial: %w", err)
+		}
+		if trialCount > 0 {
+			return nil, fmt.Errorf("kamu sudah pernah membeli paket trial, paket ini hanya bisa dibeli satu kali")
+		}
+	}
+
+	// 4. Get settings for fees
 	setting, err := s.adminRepo.GetSetting(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("gagal mengambil pengaturan biaya: %w", err)
 	}
 
-	// 4. Check if this is the student's first non-trial package purchase.
+	// 5. Check if this is the student's first non-trial package purchase.
 	//    Registration fee is a one-time charge — skip it on subsequent purchases.
 	var priorPaidCount int64
 	err = s.db.WithContext(ctx).
@@ -85,30 +103,41 @@ func (s *paymentService) CreateInvoice(ctx context.Context, studentUUID string, 
 	var totalAmount float64
 	var items []invoice.InvoiceItem
 
-	if isFirstPurchase {
+	switch {
+	case pkg.IsTrial:
+		// Trial packages are always charged at face value — no registration fee ever.
+		totalAmount = pkgPrice
+		items = []invoice.InvoiceItem{
+			*invoice.NewInvoiceItem(fmt.Sprintf("Paket Trial %s", pkg.Name), float32(pkgPrice), 1),
+		}
+
+	case isFirstPurchase:
+		// First non-trial purchase includes the one-time registration fee.
 		totalAmount = setting.RegistrationFee + pkgPrice
 		items = []invoice.InvoiceItem{
 			*invoice.NewInvoiceItem("Biaya Pendaftaran", float32(setting.RegistrationFee), 1),
 			*invoice.NewInvoiceItem(fmt.Sprintf("Paket %s (%dx pertemuan)", pkg.Name, pkg.Quota), float32(pkgPrice), 1),
 		}
-	} else {
+
+	default:
+		// Subsequent non-trial purchases — no registration fee.
 		totalAmount = pkgPrice
 		items = []invoice.InvoiceItem{
 			*invoice.NewInvoiceItem(fmt.Sprintf("Paket %s (%dx pertemuan)", pkg.Name, pkg.Quota), float32(pkgPrice), 1),
 		}
 	}
 
-	// 6. Generate external ID
+	// 7. Generate external ID
 	shortUUID := studentUUID
 	if len(shortUUID) > 8 {
 		shortUUID = shortUUID[:8]
 	}
 	externalID := fmt.Sprintf("MADEU-%s-%d", shortUUID, time.Now().UnixMilli())
 
-	// 7. Build description
+	// 8. Build description
 	description := fmt.Sprintf("Pembayaran Paket %s - %s", pkg.Name, student.Name)
 
-	// 8. Get redirect URLs
+	// 9. Get redirect URLs
 	siteURL := os.Getenv("NEXT_PUBLIC_SITE_URL")
 	if siteURL == "" {
 		siteURL = "http://localhost:3000"
@@ -116,7 +145,7 @@ func (s *paymentService) CreateInvoice(ctx context.Context, studentUUID string, 
 	successURL := fmt.Sprintf("%s/dashboard/panel/student/payment/success", siteURL)
 	failureURL := fmt.Sprintf("%s/dashboard/panel/student/payment/failed", siteURL)
 
-	// 9. Build customer
+	// 10. Build customer
 	customer := invoice.CustomerObject{}
 	customer.GivenNames = *invoice.NewNullableString(&student.Name)
 	customer.Email = *invoice.NewNullableString(&student.Email)
@@ -124,7 +153,7 @@ func (s *paymentService) CreateInvoice(ctx context.Context, studentUUID string, 
 		customer.MobileNumber = *invoice.NewNullableString(&student.Phone)
 	}
 
-	// 10. Create Xendit invoice request
+	// 11. Create Xendit invoice request
 	currency := "IDR"
 	locale := "id"
 	shouldSendEmail := true
@@ -146,7 +175,7 @@ func (s *paymentService) CreateInvoice(ctx context.Context, studentUUID string, 
 		"package_id":   packageID,
 	}
 
-	// 11. Call Xendit API
+	// 12. Call Xendit API
 	inv, _, xenditErr := s.xenditClient.InvoiceApi.CreateInvoice(ctx).
 		CreateInvoiceRequest(createReq).
 		Execute()
@@ -155,7 +184,7 @@ func (s *paymentService) CreateInvoice(ctx context.Context, studentUUID string, 
 		return nil, fmt.Errorf("gagal membuat invoice pembayaran: %v", xenditErr)
 	}
 
-	// 12. Save payment record
+	// 13. Save payment record
 	invoiceID := ""
 	if inv.Id != nil {
 		invoiceID = *inv.Id
