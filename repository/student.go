@@ -214,6 +214,12 @@ func (r *studentRepository) BookClass(
 		return nil, fmt.Errorf("gagal mengambil jadwal: %w", err)
 	}
 
+	// ── 1b. Check if schedule slot is already taken ───────────────────────────
+	if schedule.IsBooked {
+		tx.Rollback()
+		return nil, errors.New("jadwal ini sudah dipesan oleh siswa lain. Silakan pilih jadwal lain")
+	}
+
 	// ── 2. Verify teacher teaches the requested instrument ───────────────────
 	teacherTeachesInstrument := false
 	var bookedInstrumentName string
@@ -589,11 +595,11 @@ func (r *studentRepository) GetAvailableSchedules(
 			result.IsBookedSameDayAndTime = ptrBool(false)
 		}
 
-		// 5e. IsFullyAvailable
 		result.IsFullyAvailable = ptrBool(
 			*result.IsRoomAvailable &&
 				*result.IsDurationCompatible &&
-				!*result.IsBookedSameDayAndTime,
+				!*result.IsBookedSameDayAndTime &&
+				!sch.IsBooked,
 		)
 
 		results = append(results, result)
