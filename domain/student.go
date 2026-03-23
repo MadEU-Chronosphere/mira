@@ -33,7 +33,7 @@ type StudentUseCase interface {
 
 	// GetAvailableSchedules returns all teacher schedules enriched with availability flags
 	// and teacher performance metrics. Trial packages show ALL schedules regardless of instrument/duration.
-	GetAvailableSchedules(ctx context.Context, studentUUID string, packageID int) (*[]ScheduleAvailabilityResult, error)
+	GetAvailableSchedules(ctx context.Context, studentUUID string, instrumentID int) (*[]ScheduleAvailabilityResult, error)
 
 	GetMyClassHistory(ctx context.Context, studentUUID string) (*[]ClassHistory, error)
 	GetTeacherDetails(ctx context.Context, teacherUUID string) (*User, error)
@@ -52,7 +52,7 @@ type StudentRepository interface {
 	CancelBookedClass(ctx context.Context, bookingID int, studentUUID string, reason *string) (*Booking, error)
 
 	// GetAvailableSchedules with packageID for trial-aware filtering.
-	GetAvailableSchedules(ctx context.Context, studentUUID string, packageID int) (*[]ScheduleAvailabilityResult, error)
+	GetAvailableSchedules(ctx context.Context, studentUUID string, instrumentID int) (*[]ScheduleAvailabilityResult, error)
 
 	GetMyClassHistory(ctx context.Context, studentUUID string) (*[]ClassHistory, error)
 

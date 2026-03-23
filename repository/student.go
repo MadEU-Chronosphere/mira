@@ -505,7 +505,7 @@ func (r *studentRepository) GetAvailableSchedules(
 	studentUUID string,
 	instrumentID int,
 ) (*[]domain.ScheduleAvailabilityResult, error) {
- 
+
 	// ── 1. Fetch candidate schedules ─────────────────────────────────────────
 	// Only teachers who explicitly teach instrumentID are included.
 	var schedules []domain.TeacherSchedule

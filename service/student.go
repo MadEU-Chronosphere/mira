@@ -74,9 +74,9 @@ func (s *studentUseCase) BookClass(
 func (s *studentUseCase) GetAvailableSchedules(
 	ctx context.Context,
 	studentUUID string,
-	packageID int,
+	instrumentID int,
 ) (*[]domain.ScheduleAvailabilityResult, error) {
-	return s.repo.GetAvailableSchedules(ctx, studentUUID, packageID)
+	return s.repo.GetAvailableSchedules(ctx, studentUUID, instrumentID)
 }
 
 func (s *studentUseCase) GetMyProfile(ctx context.Context, userUUID string) (*domain.User, error) {
