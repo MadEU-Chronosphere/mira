@@ -64,7 +64,7 @@ type Package struct {
 	IsPromoActive   bool        `gorm:"default:false" json:"is_promo_active"`
 	IsTrial         bool        `gorm:"default:false" json:"is_trial"` // Paket percobaan/trial
 	Quota           int         `gorm:"not null" json:"quota"`
-	Duration        int         `gorm:"not null;default:30" json:"duration"` // Minutes: 30 or 60
+	Duration        int         `gorm:"not null" json:"duration"` // Minutes: 30 or 60
 	ExpiredDuration int         `json:"expired_duration"`
 	Description     string      `json:"description"`
 	InstrumentID    *int        `gorm:"default:null" json:"instrument_id"`

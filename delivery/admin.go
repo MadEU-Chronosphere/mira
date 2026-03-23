@@ -126,7 +126,7 @@ func (h *AdminHandler) UpdateAdmin(c *gin.Context) {
 
 type CreatePackageRequest struct {
 	Name            string  `json:"name" binding:"required,min=3,max=50"`
-	Duration        int     `json:"duration" binding:"required,oneof=30 60"`
+	Duration        int     `json:"duration" binding:"omitempty,oneof=30 60"`
 	ExpiredDuration int     `json:"expired_duration"`
 	Price           float64 `json:"price" binding:"required,gt=0"`
 	PromoPrice      float64 `json:"promo_price,omitempty"`
@@ -138,7 +138,7 @@ type CreatePackageRequest struct {
 }
 type UpdatePackageRequest struct {
 	Name            string  `json:"name,omitempty" binding:"omitempty,min=3,max=50"`
-	Duration        int     `json:"duration" binding:"required,oneof=30 60"`
+	Duration        int     `json:"duration" binding:"omitempty,oneof=30 60"`
 	ExpiredDuration int     `json:"expired_duration"`
 	Quota           int     `json:"quota,omitempty" binding:"omitempty,gt=0"`
 	Description     string  `json:"description,omitempty"`
@@ -207,8 +207,14 @@ func (h *AdminHandler) CreatePackage(c *gin.Context) {
 		return
 	}
 
-	if req.ExpiredDuration == 0 {
-		req.ExpiredDuration = domain.DefaultPackageExpiredDuration
+	if !req.IsTrial && req.Duration != 30 && req.Duration != 60 {
+		utils.PrintLogInfo(&name, 400, "CreatePackage - Minute Payload Failure", nil)
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal membuat paket", "success": false, "error": "Durasi paket hanya bisa 30 atau 60 menit"})
+		return
+	}
+
+	if req.IsTrial {
+		req.Duration = 0
 	}
 
 	pkg := &domain.Package{
@@ -260,10 +266,14 @@ func (h *AdminHandler) UpdatePackage(c *gin.Context) {
 		pkg.Quota = req.Quota
 	}
 
-	if req.Duration != 30 && req.Duration != 60 {
-		utils.PrintLogInfo(&name, 400, "UpdatePackage - Minute Payload Failure", &err)
+	if !req.IsTrial && req.Duration != 30 && req.Duration != 60 {
+		utils.PrintLogInfo(&name, 400, "UpdatePackage - Minute Payload Failure", nil)
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Gagal memperbarui paket", "success": false, "error": "Durasi paket hanya bisa 30 atau 60 menit"})
 		return
+	}
+
+	if req.IsTrial {
+		req.Duration = 0
 	}
 
 	if req.ExpiredDuration != 0 {

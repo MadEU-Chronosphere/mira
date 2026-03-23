@@ -51,7 +51,7 @@ func (h *TeacherPaymentHandler) GenerateMonthlyPayments(c *gin.Context) {
 	yearStr := c.Query("year")
 	monthStr := c.Query("month")
 
-	if yearStr == "" || monthStr == "" {
+if yearStr == "" || monthStr == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "query parameter 'year' dan 'month' wajib diisi",
